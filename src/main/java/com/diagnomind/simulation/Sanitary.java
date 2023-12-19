@@ -1,4 +1,4 @@
-package com.diagnomind;
+package com.diagnomind.simulation;
 
 public class Sanitary extends Thread {
 
