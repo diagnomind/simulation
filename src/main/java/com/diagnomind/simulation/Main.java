@@ -5,8 +5,8 @@ public class Main {
     static final int NUM_PACIENTE = 50;
     static final int NUM_DOCTOR = 1;
 
-    private Pacient pacients[];
-    private Sanitary doctor[];
+    private Pacient [] pacients;
+    private Sanitary [] doctor;
 
     private void waitEndOfThreads() {
 
