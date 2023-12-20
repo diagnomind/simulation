@@ -26,7 +26,6 @@ public class Main {
     }
 
     private void interruptThreads() {
-
         for (int i = 0; i < NUM_PACIENTE; i++) {
             pacients[i].interrupt();
         }
