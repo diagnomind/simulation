@@ -40,7 +40,7 @@ public class Pacient extends Thread {
         while (!this.isInterrupted()) {
             try {
                 hospital.enterHospital(getName());
-                hospital.enterFirstWaitingRoom();
+                hospital.firstWaitingRoom();
             } catch (InterruptedException e) {
                 System.out.println(e.toString());
             }

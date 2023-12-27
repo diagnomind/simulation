@@ -12,7 +12,11 @@ public class Nurse extends Thread {
     @Override
     public void run() {
         while (!this.isInterrupted()) {
-            hospital.sendDiagnosisToPatient();
+            try {
+                hospital.sendDiagnosisToPatient();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
