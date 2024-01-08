@@ -2,50 +2,68 @@ package com.diagnomind.simulation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class Hospital{
+public class Hospital {
 
     private final int CAPACITY = 20;
+    private final int NUM_DOCTORS = 4;
+    private final int NUM_PATIENTS = 50;
+
+    private Patient[] patients;
+    private Sanitary[] doctors;
+
+    private boolean docReady;
+
     private int numPatientsEntered;
     private Lock mutex;
-    private Event doctorReady;
-    private Event radiographerReady;
-    private Event nurseReady;
-    private Event patientReady;
-    private Event evaluationDone;
-    private Event patientGone;
-    private BlockingQueue<Diagnosis> resultsDeposit;
-    private BlockingQueue diagnosisToAprove;
+    private Condition docWait, patientWait;
+    private BlockingQueue<Patient> firstWaitingRoom;
+    private BlockingQueue<Patient> secondWaitingRoom;
+    Map<Integer, BlockingQueue<Patient>> waitingRooms;
+    private BlockingQueue<Diagnosis> diagnosisToAprove;
 
-    public void enterHospital(String name) throws InterruptedException {
+    public void Hospital() throws InterruptedException {
         this.mutex = new ReentrantLock();
-        this.doctorReady = new Event(mutex.newCondition());
-        this.nurseReady = new Event(mutex.newCondition());
-        this.patientReady = new Event(mutex.newCondition());
-        this.patientGone = new Event(mutex.newCondition());
+        this.docWait = mutex.newCondition();
+        this.patientWait = mutex.newCondition();
+
+        this.firstWaitingRoom = new LinkedBlockingQueue<>();
+        this.secondWaitingRoom = new LinkedBlockingQueue<>();
+        this.diagnosisToAprove = new LinkedBlockingQueue<>();
+    }
+
+    public void enterHospital() {
+
     }
 
     /* Patient */
-    public void firstWaitingRoom() throws InterruptedException {
+    public void firstWaitingRoom(Patient patient) throws InterruptedException {
         mutex.lock();
         try {
             if (numPatientsEntered == CAPACITY) {
                 throw new NullPointerException("waiting room is full");
             }
 
-            numPatientsEntered++;
-            System.out.println("Enters in the witing room");
+            // while (numPatientsEntered <= 20) {
+            //     patientWait.await();
+            //     docWait.signal();
+            // }
 
-            doctorReady.eWaitAndReset();
-            patientReady.eSignal();
+            numPatientsEntered++;
+            firstWaitingRoom.put(patient);
+            System.out.println("Enters in the witing room");
+            while(!docReady) {
+                patientWait.await();
+            }
 
             numPatientsEntered--;
 
-            System.out.println("Is being evaluated");
-            evaluationDone.eWaitAndReset();
         } finally {
             mutex.unlock();
         }
@@ -55,16 +73,14 @@ public class Hospital{
     public void attendPacient() throws InterruptedException {
         mutex.lock();
         try {
-            doctorReady.eSignal();
-            patientReady.eWaitAndReset();
-
-            System.out.println();
             /* Establecer tiempo constante para evaluar al paciente */
+            docReady = false;
+            firstWaitingRoom.take();
+            System.out.println("Is being evaluated");
             Thread.sleep(2000);
-
-            evaluationDone.eSignal();
             System.out.println("\tEvaluation done");
-            patientGone.eWaitAndReset();
+            docReady = true;
+            patientWait.signal();
         } finally {
             mutex.unlock();
         }
@@ -80,13 +96,10 @@ public class Hospital{
             numPatientsEntered++;
             System.out.println("Enters in the radiography witing room");
 
-            radiographerReady.eWaitAndReset();
-            patientReady.eSignal();
 
             numPatientsEntered--;
 
             System.out.println("In process");
-            evaluationDone.eWaitAndReset();
 
             System.out.println("Patient leaves");
         } finally {
@@ -98,16 +111,13 @@ public class Hospital{
     public void doRadiograohyToPacient() throws InterruptedException {
         mutex.lock();
         try {
-            radiographerReady.eSignal();
-            patientReady.eWaitAndReset();
 
             System.out.println();
             /* Establecer tiempo constante para evaluar al paciente */
             Thread.sleep(2000);
-
-            evaluationDone.eSignal();
+            
             System.out.println("\tEvaluation done");
-            patientGone.eWaitAndReset();
+            
         } finally {
             mutex.unlock();
         }
@@ -118,7 +128,7 @@ public class Hospital{
         /* Conseguir el diagnosis del modelo y depositarlo */
         try {
             Diagnosis resultado = new Diagnosis(true);
-            resultsDeposit.put(resultado);   
+            diagnosisToAprove.put(resultado);   
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -141,11 +151,43 @@ public class Hospital{
         mutex.lock();
         try {
             List<Diagnosis> resultToSend = new ArrayList<>();
-            while(!resultsDeposit.isEmpty()) {
-                resultToSend.add(resultsDeposit.take());
+            while(!diagnosisToAprove.isEmpty()) {
+                resultToSend.add(diagnosisToAprove.take());
             }
         } finally {
             mutex.unlock();
+        }
+    }
+
+    public void startThreads() {
+        for (int i = 0; i < NUM_PATIENTS; i++) {
+            patients[i].start();
+        }
+        for (int i = 0; i < NUM_DOCTORS; i++) {
+            doctors[i].start();
+        }
+    }
+    public void waitEndOfThreads() {
+        try {
+            for (int i = 0; i < NUM_PATIENTS; i++) {
+                patients[i].join();
+            }
+            for (int i = 0; i < NUM_DOCTORS; i++) {
+                doctors[i].interrupt();
+            }
+            for (int i = 0; i < NUM_DOCTORS; i++) {
+                doctors[i].join();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    public void interruptThreads() {
+        for (int i = 0; i < NUM_PATIENTS; i++) {
+            patients[i].interrupt();
+        }
+        for (int i = 0; i < NUM_DOCTORS; i++) {
+            doctors[i].interrupt();
         }
     }
 
