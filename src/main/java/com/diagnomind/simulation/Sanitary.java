@@ -14,11 +14,8 @@ public class Sanitary extends Thread {
         while (!this.isInterrupted()) {
             try {
                 hospital.attendPacient();
-                sleep(1000);
-                hospital.doDiagnosisWithoutModel();
-                // hospital.doDiagnosisWithModel();
             } catch (InterruptedException e) {
-                this.interrupt();
+                 this.interrupt();
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.diagnomind.simulation;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,21 +21,29 @@ public class Hospital {
     private Sanitary[] doctors;
     private Specialist[] specialists; 
 
-    private boolean docReady, radReady;
+    private boolean docReady, radReady, patientReady, specialistReady;
 
     private int numPatientsEntered, numPatientsRadiography;
     private Lock mutex;
-    private Condition docWait, patientWait, radWait, nurseWait;
+    private Condition docWait, patientWait, radWait, specialistWait, nurseWait;
     private BlockingQueue<Patient> firstWaitingRoom;
     private BlockingQueue<Patient> secondWaitingRoom;
     Map<Integer, BlockingQueue<Patient>> waitingRooms;
     private BlockingQueue<Diagnosis> diagnosisToAprove;
 
     public void Hospital() throws InterruptedException {
+        this.docReady = true;
+        this.radReady = true;
+        this.patientReady = false;
+        this.specialistReady = true;
+        this.numPatientsEntered = 0;
+        this.numPatientsRadiography = 0;
+
         this.mutex = new ReentrantLock();
         this.docWait = mutex.newCondition();
         this.radWait = mutex.newCondition();
         this.patientWait = mutex.newCondition();
+        this.specialistWait = mutex.newCondition();
         this.nurseWait = mutex.newCondition();
 
         this.firstWaitingRoom = new LinkedBlockingQueue<>();
@@ -55,11 +65,13 @@ public class Hospital {
             numPatientsEntered++;
             firstWaitingRoom.put(patient);
             System.out.println("Enters in the witing room");
-            while(!docReady) {
+            patientReady = true;
+            while (!docReady) {
+                // patientReady = true;
                 docWait.signal();
                 patientWait.await();
             }
-
+            patientReady = false;
             numPatientsEntered--;
         } finally {
             mutex.unlock();
@@ -71,7 +83,9 @@ public class Hospital {
         mutex.lock();
         try {
             /* Establecer tiempo constante para evaluar al paciente */
-            docWait.await();
+            while (!patientReady) {
+                docWait.await();
+            }
             docReady = false;
             firstWaitingRoom.take();
             System.out.println("Is being evaluated");
@@ -121,28 +135,93 @@ public class Hospital {
         }
     }
 
-    /* Doc */
-    public void doDiagnosisWithModel() {
+    /* Radiographer */
+    public void sendImageToModel() {
         /* Conseguir el diagnosis del modelo y depositarlo */
-        try {
-            Diagnosis resultado = new Diagnosis(true);
-            diagnosisToAprove.put(resultado);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    /* Doc */
-    public void doDiagnosisWithoutModel() {
-        /* Sacar el diagnosis y depositarlo */
         mutex.lock();
         try {
-            
+            URL url = new URL("");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            int response = connection.getResponseCode();
+            if (response == 200) {
+                /* Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo */
+                Diagnosis resultado = new Diagnosis(true);
+                diagnosisToAprove.put(resultado);
+            } else {
+                System.out.println("\tError connecting to the server");
+            }
+            specialistWait.signal();
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             mutex.unlock();
         }
     }
+
+    /* Radiographer */
+    public void sendImageToSpecialist() throws InterruptedException {
+        mutex.lock();
+        try {
+            /* Tiempo en el que el radiografo interpreta la imagen */
+            Thread.sleep(2000);
+            /* Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de las veces sea erroneo por ejemplo */
+            Diagnosis resultado = new Diagnosis(true);
+            diagnosisToAprove.put(resultado);
+            specialistWait.signal();
+        } finally {
+            mutex.unlock();
+        }
+    }
+
+    /* Specialist */
+    public void doDiagnosis() throws InterruptedException {
+        mutex.lock();
+        try {
+            while (diagnosisToAprove.isEmpty()) {
+                specialistWait.await();   
+            }
+            diagnosisToAprove.take();
+            /* Tiempo para hacer un diagnostico */
+            Thread.sleep(5000);
+            System.out.println("Diagnosis Complete");
+        } finally {
+            mutex.unlock();
+        }
+    }
+
+    /* Specialist */
+    public void doDiagnosisWithModel() throws InterruptedException {
+        mutex.lock();
+        try {
+            while (diagnosisToAprove.isEmpty() && specialistReady) {
+                specialistWait.await();   
+            }
+            specialistReady = false;
+            diagnosisToAprove.take();
+            Thread.sleep(2000);
+            System.out.println("Diagnosis Complete");
+            specialistReady = true;
+            patientWait.signalAll();
+        } finally {
+            mutex.unlock();
+        }
+    }
+
+    // public void getFinalResult() throws InterruptedException {
+    //     mutex.lock();
+    //     try {
+    //         while (!specialistReady) {
+    //             patientWait.await();
+    //         }
+    //         specialistReady = false;
+    //         System.out.println("Specialist giving the final diagnosis to the patient.");
+    //         Thread.sleep(3000);
+    //         System.out.println("Patient leaves");
+    //         specialistReady = true;
+    //     } finally {
+    //         mutex.unlock();
+    //     }
+    // }
 
     /* Nurse */
     public void sendDiagnosisToPatient() throws Exception {

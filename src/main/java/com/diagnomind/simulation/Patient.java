@@ -41,6 +41,7 @@ public class Patient extends Thread {
             try {
                 hospital.enterHospital();
                 hospital.firstWaitingRoom(this);
+                hospital.secondWaitingRoom(this);
             } catch (InterruptedException e) {
                 System.out.println(e.toString());
             }
