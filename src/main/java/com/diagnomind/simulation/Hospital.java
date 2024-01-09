@@ -17,13 +17,22 @@ public class Hospital {
 
     private Patient[] patients;
     private Sanitary[] doctors;
-    private Specialist[] specialists; 
+    private Specialist[] specialists;
 
-    private boolean docReady, radReady;
+    private boolean docReady;
+    private boolean radReady;
+    private boolean firstRoomFullBool;
+    private boolean secondRoomFullBool;
 
-    private int numPatientsEntered, numPatientsRadiography;
+    private int numPatientsEntered;
+    private int numPatientsRadiography;
     private Lock mutex;
-    private Condition docWait, patientWait, radWait, nurseWait;
+    private Condition docWait;
+    private Condition patientWait;
+    private Condition radWait;
+    private Condition firstWaitingRoomFull;
+    private Condition secondWaitingRoomFull;
+    private Condition nurseWait;
     private BlockingQueue<Patient> firstWaitingRoom;
     private BlockingQueue<Patient> secondWaitingRoom;
     Map<Integer, BlockingQueue<Patient>> waitingRooms;
@@ -35,6 +44,10 @@ public class Hospital {
         this.radWait = mutex.newCondition();
         this.patientWait = mutex.newCondition();
         this.nurseWait = mutex.newCondition();
+        this.firstWaitingRoomFull = mutex.newCondition();
+        this.secondWaitingRoomFull = mutex.newCondition();
+        this.firstRoomFullBool = false;
+        this.secondRoomFullBool=false;
 
         this.firstWaitingRoom = new LinkedBlockingQueue<>();
         this.secondWaitingRoom = new LinkedBlockingQueue<>();
@@ -50,17 +63,27 @@ public class Hospital {
         mutex.lock();
         try {
             if (numPatientsEntered == CAPACITY) {
-                throw new NullPointerException("waiting room is full");
+                // throw new NullPointerException("waiting room is full");
+                firstRoomFullBool = true;
+            }
+            while (firstRoomFullBool) {
+                System.out.println("Waiting room is full");
+                mutex.unlock();
+                firstWaitingRoomFull.await();
             }
             numPatientsEntered++;
             firstWaitingRoom.put(patient);
-            System.out.println("Enters in the witing room");
-            while(!docReady) {
+            System.out.println("Enters in the waiting room");
+            while (!docReady) {
                 docWait.signal();
                 patientWait.await();
             }
 
             numPatientsEntered--;
+            if (numPatientsEntered < CAPACITY) {
+                firstWaitingRoomFull.signal();
+            }
+
         } finally {
             mutex.unlock();
         }
@@ -88,23 +111,32 @@ public class Hospital {
         mutex.lock();
         try {
             if (numPatientsRadiography == CAPACITY) {
-                throw new NullPointerException("waiting room is full");
+                //throw new NullPointerException("waiting room is full");
+                secondRoomFullBool=true;
+            }
+            while(secondRoomFullBool){
+                System.out.println("Waiting room for radiography full");
+                mutex.unlock();
+                secondWaitingRoomFull.await();
             }
             numPatientsRadiography++;
             secondWaitingRoom.put(patient);
             System.out.println("Enters in the radiography witing room");
-            while(!radReady) {
+            while (!radReady) {
                 radWait.signal();
                 patientWait.await();
             }
 
             numPatientsRadiography--;
+            if (numPatientsRadiography < CAPACITY) {
+                secondWaitingRoomFull.signal();
+            }
         } finally {
             mutex.unlock();
         }
     }
 
-     /* Radiographer */
+    /* Radiographer */
     public void doRadiographyToPacient() throws InterruptedException {
         mutex.lock();
         try {
@@ -138,7 +170,7 @@ public class Hospital {
         /* Sacar el diagnosis y depositarlo */
         mutex.lock();
         try {
-            
+
         } finally {
             mutex.unlock();
         }
@@ -150,7 +182,7 @@ public class Hospital {
         try {
 
             List<Diagnosis> resultToSend = new ArrayList<>();
-            while(!diagnosisToAprove.isEmpty()) {
+            while (!diagnosisToAprove.isEmpty()) {
                 resultToSend.add(diagnosisToAprove.take());
             }
         } finally {
@@ -166,6 +198,7 @@ public class Hospital {
             doctors[i].start();
         }
     }
+
     public void waitEndOfThreads() {
         try {
             for (int i = 0; i < NUM_PATIENTS; i++) {
@@ -181,6 +214,7 @@ public class Hospital {
             e.printStackTrace();
         }
     }
+
     public void interruptThreads() {
         for (int i = 0; i < NUM_PATIENTS; i++) {
             patients[i].interrupt();
