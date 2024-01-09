@@ -81,7 +81,7 @@ public class Hospital {
             }
             while (firstRoomFullBool) {
                 System.out.println("Waiting room is full");
-                mutex.unlock();
+                //mutex.unlock();
                 firstWaitingRoomFull.await();
             }
             numPatientsEntered++;
@@ -118,7 +118,7 @@ public class Hospital {
             Thread.sleep(2000);
             System.out.println("\tEvaluation done");
             docReady = true;
-            patientWait.signalAll();
+            patientWait.signal();
         } finally {
             mutex.unlock();
         }
@@ -133,7 +133,7 @@ public class Hospital {
             }
             while(secondRoomFullBool){
                 System.out.println("Waiting room for radiography full");
-                mutex.unlock();
+                //mutex.unlock();
                 secondWaitingRoomFull.await();
             }
             numPatientsRadiography++;
@@ -164,7 +164,7 @@ public class Hospital {
             Thread.sleep(2000);
             System.out.println("\tRadiography done");
             radReady = true;
-            patientWait.signalAll();
+            patientWait.signal();
         } finally {
             mutex.unlock();
         }
@@ -236,7 +236,7 @@ public class Hospital {
             Thread.sleep(2000);
             System.out.println("Diagnosis Complete");
             specialistReady = true;
-            patientWait.signalAll();
+            patientWait.signal();
         } finally {
             mutex.unlock();
         }
