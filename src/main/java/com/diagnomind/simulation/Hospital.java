@@ -17,12 +17,13 @@ public class Hospital {
 
     private Patient[] patients;
     private Sanitary[] doctors;
+    private Specialist[] specialists; 
 
-    private boolean docReady;
+    private boolean docReady, radReady;
 
-    private int numPatientsEntered;
+    private int numPatientsEntered, numPatientsRadiography;
     private Lock mutex;
-    private Condition docWait, patientWait;
+    private Condition docWait, patientWait, radWait, nurseWait;
     private BlockingQueue<Patient> firstWaitingRoom;
     private BlockingQueue<Patient> secondWaitingRoom;
     Map<Integer, BlockingQueue<Patient>> waitingRooms;
@@ -31,7 +32,9 @@ public class Hospital {
     public void Hospital() throws InterruptedException {
         this.mutex = new ReentrantLock();
         this.docWait = mutex.newCondition();
+        this.radWait = mutex.newCondition();
         this.patientWait = mutex.newCondition();
+        this.nurseWait = mutex.newCondition();
 
         this.firstWaitingRoom = new LinkedBlockingQueue<>();
         this.secondWaitingRoom = new LinkedBlockingQueue<>();
@@ -49,21 +52,15 @@ public class Hospital {
             if (numPatientsEntered == CAPACITY) {
                 throw new NullPointerException("waiting room is full");
             }
-
-            // while (numPatientsEntered <= 20) {
-            //     patientWait.await();
-            //     docWait.signal();
-            // }
-
             numPatientsEntered++;
             firstWaitingRoom.put(patient);
             System.out.println("Enters in the witing room");
             while(!docReady) {
+                docWait.signal();
                 patientWait.await();
             }
 
             numPatientsEntered--;
-
         } finally {
             mutex.unlock();
         }
@@ -74,50 +71,51 @@ public class Hospital {
         mutex.lock();
         try {
             /* Establecer tiempo constante para evaluar al paciente */
+            docWait.await();
             docReady = false;
             firstWaitingRoom.take();
             System.out.println("Is being evaluated");
             Thread.sleep(2000);
             System.out.println("\tEvaluation done");
             docReady = true;
-            patientWait.signal();
+            patientWait.signalAll();
         } finally {
             mutex.unlock();
         }
     }
 
-    public void secondWaitingRoom() throws InterruptedException {
+    public void secondWaitingRoom(Patient patient) throws InterruptedException {
         mutex.lock();
         try {
-            if (numPatientsEntered == CAPACITY) {
+            if (numPatientsRadiography == CAPACITY) {
                 throw new NullPointerException("waiting room is full");
             }
-
-            numPatientsEntered++;
+            numPatientsRadiography++;
+            secondWaitingRoom.put(patient);
             System.out.println("Enters in the radiography witing room");
+            while(!radReady) {
+                radWait.signal();
+                patientWait.await();
+            }
 
-
-            numPatientsEntered--;
-
-            System.out.println("In process");
-
-            System.out.println("Patient leaves");
+            numPatientsRadiography--;
         } finally {
             mutex.unlock();
         }
     }
 
      /* Radiographer */
-    public void doRadiograohyToPacient() throws InterruptedException {
+    public void doRadiographyToPacient() throws InterruptedException {
         mutex.lock();
         try {
-
-            System.out.println();
-            /* Establecer tiempo constante para evaluar al paciente */
+            radWait.await();
+            radReady = false;
+            secondWaitingRoom.take();
+            System.out.println("Radiography in process");
             Thread.sleep(2000);
-            
-            System.out.println("\tEvaluation done");
-            
+            System.out.println("\tRadiography done");
+            radReady = true;
+            patientWait.signalAll();
         } finally {
             mutex.unlock();
         }
@@ -128,7 +126,7 @@ public class Hospital {
         /* Conseguir el diagnosis del modelo y depositarlo */
         try {
             Diagnosis resultado = new Diagnosis(true);
-            diagnosisToAprove.put(resultado);   
+            diagnosisToAprove.put(resultado);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -150,6 +148,7 @@ public class Hospital {
     public void sendDiagnosisToPatient() throws Exception {
         mutex.lock();
         try {
+
             List<Diagnosis> resultToSend = new ArrayList<>();
             while(!diagnosisToAprove.isEmpty()) {
                 resultToSend.add(diagnosisToAprove.take());
