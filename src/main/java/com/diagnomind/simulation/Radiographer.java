@@ -21,8 +21,9 @@ public class Radiographer extends Thread {
     public void run() {
         while (!this.isInterrupted()) {
             try {
-                hospital.doRadiograohyToPacient();
-                hospital.sendDiagnosisToPatient();
+                hospital.doRadiographyToPacient();
+                hospital.sendImageToSpecialist();
+                // hospital.sendImageToModel();
             } catch (InterruptedException e) {
                 System.out.println(e.toString());
             } catch (Exception e) {
