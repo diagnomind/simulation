@@ -13,7 +13,7 @@ public class Nurse extends Thread {
     public void run() {
         while (!this.isInterrupted()) {
             try {
-                hospital.sendDiagnosisToPatient();
+                // hospital.sendDiagnosisToPatient();
             } catch (Exception e) {
                 e.printStackTrace();
             }
