@@ -3,5 +3,6 @@
     "sonarlint.connectedMode.project": {
         "connectionId": "sonarqube-diagnomind",
         "projectKey": "simulation"
-    }
+    },
+    "java.configuration.updateBuildConfiguration": "automatic"
 }
