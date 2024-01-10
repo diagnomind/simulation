@@ -37,7 +37,7 @@ public class Patient extends Thread {
         this.tiempoFin = tiempoFin;
     }
 
-    public boolean getCanDoPadiography() {
+    public boolean getCanDoRadiography() {
         return this.canDoRadiography;
     }
 

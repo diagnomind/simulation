@@ -5,15 +5,9 @@ public class Main {
 
     public static void main(String[] args) {
         hospital = new Hospital();
+
+        hospital.createThreads();
         hospital.startThreads();
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
-        }
-
-        hospital.interruptThreads();
         hospital.waitEndOfThreads();
     }
 
