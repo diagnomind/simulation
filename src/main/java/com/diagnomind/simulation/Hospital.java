@@ -311,4 +311,13 @@ public class Hospital {
         }
     }
 
+    public int getNumPatientsEntered() {
+        return numPatientsEntered;
+    }
+
+    public int getNumPatientsRadiography() {
+        return numPatientsRadiography;
+    }
+    
+
 }
