@@ -39,6 +39,23 @@ public class PacientTest {
         assertEquals(5, pacient.calcularTiempoEjecucion());
     }
 
+    @Test
+    public void CanDoRadiographyTest() {
+        pacient.sendToRadiography();
+        assertTrue(pacient.getCanDoPadiography());
+    }
+
+    @Test
+    public void attendedTest() {
+        pacient.itsAttended();
+        assertTrue(pacient.getItsAttended());
+    }
+
+    @Test
+    public void radiographyTest() {
+        pacient.radiographyDone();
+        assertTrue(pacient.getRadiographyDone());
+    }
     // @Test()
     // public void runTest() {
       
