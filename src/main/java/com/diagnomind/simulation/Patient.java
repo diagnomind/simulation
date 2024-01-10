@@ -7,12 +7,14 @@ public class Patient extends Thread {
     Hospital hospital;
     long tiempoInit;
     long tiempoFin;
+    boolean canDoRadiography;
 
     public Patient(String name, int id, Hospital hospital) {
-        super("Patient");
+        super("Patient " + id);
         this.name = name;
         this.hospital = hospital;
         this.diagnosisId = id;
+        this.canDoRadiography = false;
     }
 
     public long getTiempoInit() {
@@ -31,8 +33,16 @@ public class Patient extends Thread {
         this.tiempoFin = tiempoFin;
     }
 
+    public boolean getCanDoPadiography() {
+        return this.canDoRadiography;
+    }
+
     public long calcularTiempoEjecucion(){
         return (this.tiempoFin-this.tiempoInit);
+    }
+
+    public void sendToRadiography() {
+        this.canDoRadiography = true;
     }
 
     @Override
