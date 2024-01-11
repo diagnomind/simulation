@@ -25,13 +25,11 @@ public class Hospital {
 
     private boolean docReady;
     private boolean radReady;
-    private boolean patientReadyToSeeDoc;
-    private boolean patientReadyToSeeRadiographer;
-    private boolean patientReadyForDiagnosis;
     private boolean specialistReady;
 
     private int numPatientsEntered;
     private int numPatientsRadiography;
+    private int numRadiographys;
     private Lock mutex;
     private Condition docWait;
     private Condition patientWait;
@@ -53,13 +51,11 @@ public class Hospital {
 
         this.docReady = false;
         this.radReady = false;
-        this.patientReadyToSeeDoc = false;
-        this.patientReadyToSeeRadiographer = false;
-        this.patientReadyForDiagnosis = false;
         this.specialistReady = true;
 
         this.numPatientsEntered = 0;
         this.numPatientsRadiography = 0;
+        this.numRadiographys = 0;
 
         this.mutex = new ReentrantLock();
         this.docWait = mutex.newCondition();
@@ -76,6 +72,7 @@ public class Hospital {
     }
 
     /* Patient */
+    @SuppressWarnings("java:S106")
     public void firstWaitingRoom(Patient patient) throws InterruptedException {
         mutex.lock();
         try {
@@ -85,11 +82,12 @@ public class Hospital {
                     System.out.println("[Waitingroom 1]: Full");
                     firstWaitingRoomFull.await();
                 }
+                patient.setTiempoInit(System.currentTimeMillis());
                 numPatientsEntered++;
                 firstWaitingRoom.put(patient);
                 System.out.println("[Waitingroom 1]: " + patient.getName() + " enters");
+
                 while (!docReady) {
-                    patientReadyToSeeDoc = true;
                     docWait.signal();
                     patientWait.await();
                 }
@@ -107,19 +105,19 @@ public class Hospital {
     }
 
     /* Doc */
+    @SuppressWarnings("java:S106")
     public void attendPacient() throws InterruptedException {
         mutex.lock();
         try {
-            while (!patientReadyToSeeDoc) {
+            while (firstWaitingRoom.isEmpty()) {
                 docWait.await();
             }
             docReady = false;
-            firstWaitingRoom.take();
-            System.out.println("\t[Doc]: Evaluating patient");
+            Patient toEvaluate = firstWaitingRoom.take();
+            System.out.println("\t[Doc]: Evaluating " + toEvaluate.getName());
             Thread.sleep(1000);
             System.out.println("\t\t[Doc]: Evaluation done");
             docReady = true;
-            patientReadyToSeeDoc = false;   
             patientWait.signal();
         } finally {
             mutex.unlock();
@@ -127,6 +125,7 @@ public class Hospital {
     }
 
     /* Patient */
+    @SuppressWarnings("java:S106")
     public void secondWaitingRoom(Patient patient) throws InterruptedException {
         mutex.lock();
         try {
@@ -139,7 +138,6 @@ public class Hospital {
                 secondWaitingRoom.put(patient);
                 System.out.println("[Waitingroom 2]: " + patient.getName() + " enters");
                 while (!radReady) {
-                    patientReadyToSeeRadiographer = true;
                     radWait.signal();
                     patientWaitRadiography.await();
                 }
@@ -155,19 +153,22 @@ public class Hospital {
     }
 
     /* Radiographer */
+    @SuppressWarnings("java:S106")
     public void doRadiographyToPacient() throws InterruptedException {
         mutex.lock();
         try {
-            while (!patientReadyToSeeRadiographer) {
+            while (secondWaitingRoom.isEmpty()) {
                 radWait.await();
             }
             radReady = false;
-            secondWaitingRoom.take();
-            System.out.println("\t[Radiographer]: In process");
+            Patient toEvaluate = secondWaitingRoom.take();
+            System.out.println("\t[Radiographer]: " +toEvaluate.getName());
             Thread.sleep(1000);
             System.out.println("\t\t[Radiographer]: Radiography done");
             radReady = true;
-            patientReadyToSeeRadiographer = false;
+
+            sendImageToSpecialist(toEvaluate);
+            numRadiographys++;
             patientWaitRadiography.signal();
         } finally {
             mutex.unlock();
@@ -175,6 +176,7 @@ public class Hospital {
     }
 
     /* Radiographer */
+    @SuppressWarnings("java:S106")
     public void sendImageToModel() throws InterruptedException, IOException {
         /* Conseguir el diagnosis del modelo y depositarlo */
         mutex.lock();
@@ -184,8 +186,8 @@ public class Hospital {
             int response = connection.getResponseCode();
             if (response == 200) {
                 /* Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo */
-                Diagnosis resultado = new Diagnosis(true);
-                diagnosisToAprove.put(resultado);
+                //Diagnosis resultado = new Diagnosis(true);
+                //diagnosisToAprove.put(resultado);
             } else {
                 System.out.println("\tError connecting to the server");
             }
@@ -196,37 +198,47 @@ public class Hospital {
     }
 
     /* Radiographer */
-    public void sendImageToSpecialist() throws InterruptedException {
+    @SuppressWarnings("java:S106")
+    public void sendImageToSpecialist(Patient diagnosisPatient) throws InterruptedException {
         mutex.lock();
         try {
-            /* Tiempo en el que el radiografo interpreta la imagen */
-            Thread.sleep(2000);
-            /* Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de las veces sea erroneo por ejemplo */
-            Diagnosis resultado = new Diagnosis(true);
-            diagnosisToAprove.put(resultado);
-            specialistWait.signal();
+            if (numRadiographys != 0) {
+                /* Tiempo en el que el radiografo interpreta la imagen */
+                Thread.sleep(2000);
+                /* Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de las veces sea erroneo por ejemplo */
+                Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
+                diagnosisToAprove.put(resultado);
+                System.out.println("\t\t\t[Raadiographer]: Image sent");
+                numRadiographys--;
+                specialistWait.signal();
+            }
         } finally {
             mutex.unlock();
         }
     }
 
     /* Specialist */
+    @SuppressWarnings("java:S106")
     public void doDiagnosis() throws InterruptedException {
         mutex.lock();
         try {
             while (diagnosisToAprove.isEmpty()) {
                 specialistWait.await();   
             }
-            diagnosisToAprove.take();
+            Diagnosis diagno = diagnosisToAprove.take();
+            Patient diagnosedPatient = diagno.getPatient();
             /* Tiempo para hacer un diagnostico */
-            Thread.sleep(5000);
-            System.out.println("Diagnosis Complete");
+            Thread.sleep(2000);
+            System.out.println("\t\t\t\t[Specialist]: Diagnosis complete for "+diagnosedPatient.getName());
+            diagnosedPatient.setTiempoFin(System.currentTimeMillis());
+            System.out.println("\t\t\t\t["+diagnosedPatient.getName()+"]: Total time: "+diagnosedPatient.calcularTiempoEjecucion());
         } finally {
             mutex.unlock();
         }
     }
 
     /* Specialist */
+    @SuppressWarnings("java:S106")
     public void doDiagnosisWithModel() throws InterruptedException {
         mutex.lock();
         try {
