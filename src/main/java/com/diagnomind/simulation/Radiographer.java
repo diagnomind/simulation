@@ -26,9 +26,7 @@ public class Radiographer extends Thread {
                 // hospital.sendImageToModel();
             } catch (InterruptedException e) {
                 System.out.println(e.toString());
-            } catch (Exception e) {
-                System.out.println(e.toString());
-            }
+            } 
         }
     }
 }
