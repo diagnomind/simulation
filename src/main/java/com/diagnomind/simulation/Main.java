@@ -7,7 +7,7 @@ public class Main {
         hospital = new Hospital();
 
         hospital.createThreads();
-        hospital.startThreads();
+        hospital.startThreads();    
         hospital.waitEndOfThreads();
     }
 
