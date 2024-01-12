@@ -3,10 +3,12 @@ package com.diagnomind.simulation;
 public class Specialist extends Thread {
 
     Hospital hospital;
+    int id;
 
-    public Specialist(Hospital hospital){
-        super("Specialist");
+    public Specialist(Hospital hospital, int id){
+        super("Specialist " + id);
         this.hospital=hospital;
+        this.id = id;
     }
 
     @Override

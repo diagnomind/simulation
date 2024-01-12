@@ -50,7 +50,7 @@ public class PacientTest {
     @Test
     public void CanDoRadiographyTest() {
         pacient.sendToRadiography();
-        assertTrue(pacient.getCanDoPadiography());
+        assertTrue(pacient.getCanDoRadiography());
     }
 
     @Test
