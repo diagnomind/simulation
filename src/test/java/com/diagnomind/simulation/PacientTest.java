@@ -3,19 +3,27 @@ package com.diagnomind.simulation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class PacientTest {
 
-    private Patient pacient;
+    Patient pacient;
+    Hospital hospital;
 
     @Before
     public void constructorTest() {
         String name = "Pacient test";
-        Hospital hospital = new Hospital();
+        hospital = Mockito.mock(Hospital.class);
         int id = 0;
         pacient = new Patient(name, id, hospital);
+    }
+
+    @After
+    public void clear() {
+        hospital = null;
     }
 
     @Test
@@ -56,8 +64,18 @@ public class PacientTest {
         pacient.radiographyDone();
         assertTrue(pacient.getRadiographyDone());
     }
-    // @Test()
-    // public void runTest() {
-      
-    // }
+
+    @Test
+    public void runTest() {
+        pacient.start();
+        pacient.interrupt();
+        assertTrue(pacient.isInterrupted());
+    }
+
+    //ns porque no hace la exception
+    @Test()
+    public void runTestException() throws InterruptedException {
+        pacient.start();
+        Mockito.doThrow(new InterruptedException()).when(hospital).firstWaitingRoom(pacient);
+    }
 }

@@ -319,5 +319,7 @@ public class Hospital {
         return numPatientsRadiography;
     }
     
-
+    public int getNumPatients() {
+        return patients.length;
+    }
 }
