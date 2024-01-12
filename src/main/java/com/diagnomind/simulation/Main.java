@@ -11,7 +11,7 @@ public class Main {
         hospital.startThreads();    
         hospital.waitEndOfThreads();
 
-        System.out.println("Simulations total time: " + hospital.getTotalTime());
+        System.out.println("\nSimulations total time: " + hospital.getTotalTime());
     }
 
 }

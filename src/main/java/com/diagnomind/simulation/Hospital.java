@@ -11,11 +11,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Hospital {
 
-    private static final  int CAPACITY = 2;
-    private static final int NUM_DOCTORS = 1;
-    private static final int NUM_PATIENTS = 5;
-    private static final int NUM_RADIOGRAPHERS = 1;
-    private static final int NUM_SPECIALISTS = 1;
+    private static final  int CAPACITY = 4;
+    private static final int NUM_DOCTORS = 3;
+    private static final int NUM_PATIENTS = 10;
+    private static final int NUM_RADIOGRAPHERS = 2;
+    private static final int NUM_SPECIALISTS = 2;
 
     private Patient[] patients;
     private Sanitary[] doctors;
@@ -72,7 +72,7 @@ public class Hospital {
         mutex.lock();
         try {
             if (!patient.getItsAttended()) {
-                System.out.println("[" + patient.getName() + "] enters the hospital");
+                System.out.println("["+patient.getName()+"] enters the hospital");
                 while (numPatientsEntered == CAPACITY) {
                     System.out.println("[Waitingroom 1]: Full");
                     firstWaitingRoomFull.await();
@@ -80,14 +80,14 @@ public class Hospital {
                 patient.setTiempoInit(System.currentTimeMillis());
                 numPatientsEntered++;
                 firstWaitingRoom.put(patient);
-                System.out.println("[Waitingroom 1]: " + patient.getName() + " enters");
+                System.out.println("[Waitingroom 1]: "+patient.getName()+" enters");
 
                 while (!patient.getItsAttended()) {
                     docWait.signal();
                     patientWait.await();
                 }
 
-                System.out.println("[Waitingroom 1]: " + patient.getName() +  " gets out");
+                System.out.println("[Waitingroom 1]: "+patient.getName()+" gets out");
                 numPatientsEntered--;
                 firstWaitingRoomFull.signal();
                 patientWait.signal();
@@ -103,15 +103,18 @@ public class Hospital {
     public void attendPacient() throws InterruptedException {
         mutex.lock();
         try {
-            while (firstWaitingRoom.isEmpty()) {
-                docWait.await();
+            /* This 'if' works but the radiographys have preference */
+            if (patientResults.isEmpty() && diagnosisToAprove.isEmpty()) {
+                while (firstWaitingRoom.isEmpty()) {
+                    docWait.await();
+                }
+                Patient toEvaluate = firstWaitingRoom.take();
+                System.out.println("\t["+Thread.currentThread().getName()+"]: Evaluating "+toEvaluate.getName());
+                Thread.sleep(1000);
+                System.out.println("\t\t["+Thread.currentThread().getName()+"]: Evaluation done");
+                toEvaluate.itsAttended();
+                patientWait.signal();
             }
-            Patient toEvaluate = firstWaitingRoom.take();
-            System.out.println("\t[" + Thread.currentThread().getName() + "]: Evaluating " + toEvaluate.getName());
-            Thread.sleep(1000);
-            System.out.println("\t\t["+ Thread.currentThread().getName() +"]: Evaluation done");
-            toEvaluate.itsAttended();
-            patientWait.signal();
         } finally {
             mutex.unlock();
         }
@@ -129,12 +132,12 @@ public class Hospital {
                 }
                 numPatientsRadiography++;
                 secondWaitingRoom.put(patient);
-                System.out.println("[Waitingroom 2]: " + patient.getName() + " enters");
+                System.out.println("[Waitingroom 2]: "+patient.getName()+" enters");
                 while (!patient.getRadiographyDone()) {
                     radWait.signal();
                     patientWaitRadiography.await();
                 }
-                System.out.println("[Waitingroom 2]: " + patient.getName() +  " gets out");
+                System.out.println("[Waitingroom 2]: "+patient.getName()+" gets out");
                 numPatientsRadiography--;
                 secondWaitingRoomFull.signal();
                 patientWaitRadiography.signal();
@@ -153,7 +156,7 @@ public class Hospital {
                 radWait.await();
             }
             Patient toEvaluate = secondWaitingRoom.take();
-            System.out.println("\t["+Thread.currentThread().getName()+"]: Scanning " + toEvaluate.getName());
+            System.out.println("\t["+Thread.currentThread().getName()+"]: Scanning "+toEvaluate.getName());
             Thread.sleep(1000);
             System.out.println("\t\t["+Thread.currentThread().getName()+"]: Radiography done");
             toEvaluate.radiographyDone();
@@ -222,10 +225,10 @@ public class Hospital {
             Patient diagnosedPatient = diagno.getPatient();
             /* Tiempo para hacer un diagnostico */
             Thread.sleep(2000);
-            System.out.println("\t\t\t\t["+Thread.currentThread().getName()+"]: Diagnosis complete for "+ diagnosedPatient.getName());
+            System.out.println("\t\t\t\t["+Thread.currentThread().getName()+"]: Diagnosis complete for "+diagnosedPatient.getName());
             diagnosedPatient.setTiempoFin(System.currentTimeMillis());
-            System.out.println("\t\t\t\t[" + diagnosedPatient.getName() + "] Total time: " + diagnosedPatient.calcularTiempoEjecucion());
             totalTime += diagnosedPatient.calcularTiempoEjecucion();
+            System.out.println("\t\t\t\t["+diagnosedPatient.getName()+"] Total time: "+totalTime);
             patientResults.put(diagnosedPatient);
         } finally {
             mutex.unlock();
@@ -249,6 +252,7 @@ public class Hospital {
         }
     }
 
+    /* Doc */
     @SuppressWarnings("java:S106")
     public void giveFinalResult() throws InterruptedException {
         mutex.lock();
@@ -257,7 +261,7 @@ public class Hospital {
                 Patient patient = patientResults.take();
                 System.out.println("\t\t\t\t\t["+Thread.currentThread().getName()+"]: "+patient.getName()+" has received the result");
                 Thread.sleep(2000);
-                System.out.println("\t\t\t\t\t["+Thread.currentThread().getName()+"]: "+ patient.getName()+" leaves the hospital");
+                System.out.println("\t\t\t\t\t["+Thread.currentThread().getName()+"]: "+patient.getName()+" leaves the hospital");
             }
         } finally {
             mutex.unlock();
