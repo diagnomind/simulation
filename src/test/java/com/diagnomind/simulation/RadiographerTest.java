@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -21,6 +22,11 @@ public class RadiographerTest {
         radioTest = new Radiographer(hospital);
     }
 
+    @After
+    public void clear() {
+        hospital = null;
+    }
+
     @Test
     public void getSetHospitalTest() {
         radioTest.setHospital(hospital);
@@ -32,7 +38,7 @@ public class RadiographerTest {
         radioTest.start();
         radioTest.interrupt();
         assertTrue(radioTest.isInterrupted());
-        
+
     }
 
     @Test()
