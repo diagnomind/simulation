@@ -66,14 +66,13 @@ public class Patient extends Thread {
     }
 
     @Override
+    @SuppressWarnings("java:S106")
     public void run() {
-        while (!this.isInterrupted()) {
-            try {
-                hospital.firstWaitingRoom(this);
-                hospital.secondWaitingRoom(this);
-            } catch (InterruptedException e) {
-                System.out.println(e.toString());
-            }
+        try {
+            hospital.firstWaitingRoom(this);
+            hospital.secondWaitingRoom(this);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

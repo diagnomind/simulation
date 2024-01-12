@@ -26,7 +26,7 @@ public class Radiographer extends Thread {
             try {
                 hospital.doRadiographyToPacient();
             } catch (InterruptedException e) {
-                System.out.println(e.toString());
+                this.interrupt();
             }
         }
     }

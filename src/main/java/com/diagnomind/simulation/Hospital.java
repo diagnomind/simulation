@@ -11,10 +11,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Hospital {
 
-    private static final  int CAPACITY = 3;
+    private static final  int CAPACITY = 2;
     private static final int NUM_DOCTORS = 1;
-    private static final int NUM_PATIENTS = 10;
-    private static final int NUM_RADIOGRAPHERS = 2;
+    private static final int NUM_PATIENTS = 5;
+    private static final int NUM_RADIOGRAPHERS = 1;
     private static final int NUM_SPECIALISTS = 1;
 
     private Patient[] patients;
@@ -22,15 +22,10 @@ public class Hospital {
     private Specialist[] specialists;
     private Radiographer[] radiographers;
 
-    private boolean docReady;
-    private boolean radReady;
-    private boolean specialistReady;
-
     private int numPatientsEntered;
     private int numPatientsRadiography;
     private int numRadiographys;
-    public int totalTime;
-    private int numResults;
+    private int totalTime;
 
     private Lock mutex;
     private Condition docWait;
@@ -51,24 +46,19 @@ public class Hospital {
         this.specialists = new Specialist[NUM_SPECIALISTS];
         this.radiographers = new Radiographer[NUM_RADIOGRAPHERS];
 
-        this.docReady = false;
-        this.radReady = false;
-        this.specialistReady = true;
-
+        this.totalTime = 0;
+        this.numRadiographys = 0;
         this.numPatientsEntered = 0;
         this.numPatientsRadiography = 0;
-        this.numRadiographys = 0;
-        this.numResults = 0;
-        this.totalTime = 0;
 
         this.mutex = new ReentrantLock();
         this.docWait = mutex.newCondition();
         this.radWait = mutex.newCondition();
         this.patientWait = mutex.newCondition();
-        this.patientWaitRadiography = mutex.newCondition();
         this.specialistWait = mutex.newCondition();
         this.firstWaitingRoomFull = mutex.newCondition();
         this.secondWaitingRoomFull = mutex.newCondition();
+        this.patientWaitRadiography = mutex.newCondition();
 
         this.firstWaitingRoom = new LinkedBlockingQueue<>();
         this.secondWaitingRoom = new LinkedBlockingQueue<>();
@@ -92,17 +82,15 @@ public class Hospital {
                 firstWaitingRoom.put(patient);
                 System.out.println("[Waitingroom 1]: " + patient.getName() + " enters");
 
-                while (!docReady) {
+                while (!patient.getItsAttended()) {
                     docWait.signal();
                     patientWait.await();
                 }
-                
-                docReady = false;
+
                 System.out.println("[Waitingroom 1]: " + patient.getName() +  " gets out");
                 numPatientsEntered--;
                 firstWaitingRoomFull.signal();
                 patientWait.signal();
-                patient.itsAttended();
                 patient.sendToRadiography();
             }
         } finally {
@@ -118,12 +106,11 @@ public class Hospital {
             while (firstWaitingRoom.isEmpty()) {
                 docWait.await();
             }
-            docReady = false;
             Patient toEvaluate = firstWaitingRoom.take();
-            System.out.println("\t[Doc]: Evaluating " + toEvaluate.getName());
+            System.out.println("\t[" + Thread.currentThread().getName() + "]: Evaluating " + toEvaluate.getName());
             Thread.sleep(1000);
-            System.out.println("\t\t[Doc]: Evaluation done");
-            docReady = true;
+            System.out.println("\t\t["+ Thread.currentThread().getName() +"]: Evaluation done");
+            toEvaluate.itsAttended();
             patientWait.signal();
         } finally {
             mutex.unlock();
@@ -143,16 +130,14 @@ public class Hospital {
                 numPatientsRadiography++;
                 secondWaitingRoom.put(patient);
                 System.out.println("[Waitingroom 2]: " + patient.getName() + " enters");
-                while (!radReady) {
+                while (!patient.getRadiographyDone()) {
                     radWait.signal();
                     patientWaitRadiography.await();
                 }
-                radReady = false;
                 System.out.println("[Waitingroom 2]: " + patient.getName() +  " gets out");
                 numPatientsRadiography--;
                 secondWaitingRoomFull.signal();
                 patientWaitRadiography.signal();
-                patient.radiographyDone();
             }
         } finally {
             mutex.unlock();
@@ -167,15 +152,13 @@ public class Hospital {
             while (secondWaitingRoom.isEmpty()) {
                 radWait.await();
             }
-            radReady = false;
             Patient toEvaluate = secondWaitingRoom.take();
-            System.out.println("\t[Radiographer]: " + toEvaluate.getName());
+            System.out.println("\t["+Thread.currentThread().getName()+"]: Scanning " + toEvaluate.getName());
             Thread.sleep(1000);
-            System.out.println("\t\t[Radiographer]: Radiography done");
-            radReady = true;
-
-            sendImageToSpecialist(toEvaluate);
+            System.out.println("\t\t["+Thread.currentThread().getName()+"]: Radiography done");
+            toEvaluate.radiographyDone();
             numRadiographys++;
+            sendImageToSpecialist(toEvaluate);
             patientWaitRadiography.signal();
         } finally {
             mutex.unlock();
@@ -218,7 +201,7 @@ public class Hospital {
                 /* Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de las veces sea erroneo por ejemplo */
                 Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
                 diagnosisToAprove.put(resultado);
-                System.out.println("\t\t\t[Raadiographer]: Image sent");
+                System.out.println("\t\t\t["+Thread.currentThread().getName()+"]: Image sent");
                 numRadiographys--;
                 specialistWait.signal();
             }
@@ -239,13 +222,11 @@ public class Hospital {
             Patient diagnosedPatient = diagno.getPatient();
             /* Tiempo para hacer un diagnostico */
             Thread.sleep(2000);
-            System.out.println("\t\t\t\t[Specialist]: Diagnosis complete for "+ diagnosedPatient.getName());
+            System.out.println("\t\t\t\t["+Thread.currentThread().getName()+"]: Diagnosis complete for "+ diagnosedPatient.getName());
             diagnosedPatient.setTiempoFin(System.currentTimeMillis());
             System.out.println("\t\t\t\t[" + diagnosedPatient.getName() + "] Total time: " + diagnosedPatient.calcularTiempoEjecucion());
             totalTime += diagnosedPatient.calcularTiempoEjecucion();
             patientResults.put(diagnosedPatient);
-            numResults++;
-            // finalResult.signal();
         } finally {
             mutex.unlock();
         }
@@ -256,14 +237,12 @@ public class Hospital {
     public void doDiagnosisWithModel() throws InterruptedException {
         mutex.lock();
         try {
-            while (diagnosisToAprove.isEmpty() && specialistReady) {
+            while (diagnosisToAprove.isEmpty()) {
                 specialistWait.await();   
             }
-            specialistReady = false;
             diagnosisToAprove.take();
             Thread.sleep(2000);
             System.out.println("Diagnosis Complete");
-            specialistReady = true;
             patientWait.signal();
         } finally {
             mutex.unlock();
@@ -271,41 +250,32 @@ public class Hospital {
     }
 
     @SuppressWarnings("java:S106")
-    public void getFinalResult(Patient patient) throws InterruptedException {
+    public void giveFinalResult() throws InterruptedException {
         mutex.lock();
         try {
-            if (!patientResults.isEmpty() && patientResults.take().equals(patient)) { 
-                // while (patientResults.isEmpty()) {
-                //     finalResult.await();
-                // }
-                // specialistReady = false;
-                System.out.println("\t\t\t\t\t[" + patient.getName() + "]: Has received the result");
+            if (!patientResults.isEmpty()) {
+                Patient patient = patientResults.take();
+                System.out.println("\t\t\t\t\t["+Thread.currentThread().getName()+"]: "+patient.getName()+" has received the result");
                 Thread.sleep(2000);
-                System.out.println("\t\t\t\t\t[" + patient.getName() + "]: Leaves the hospital");
-                // specialistReady = true;
-                numResults--;
+                System.out.println("\t\t\t\t\t["+Thread.currentThread().getName()+"]: "+ patient.getName()+" leaves the hospital");
             }
         } finally {
             mutex.unlock();
         }
     }
 
-    //TODO: Hacer que quien entregue los resultados sea el medico (añadir una funcion al medico para que cuando este libre de los resultados)
-
-    // public void
-
     public void createThreads() {
         for (int i = 0; i < NUM_PATIENTS; i++) {
-            patients[i] = new Patient("Patient", i + 1, this);
+            patients[i] = new Patient("Patient", i+1, this);
         }
         for (int i = 0; i < NUM_DOCTORS; i++) {
-            doctors[i] = new Sanitary(this);
+            doctors[i] = new Sanitary(this, i+1);
         }
         for (int i = 0; i < NUM_SPECIALISTS; i++) {
-            specialists[i] = new Specialist(this);
+            specialists[i] = new Specialist(this, i+1);
         }
         for (int i = 0; i < NUM_RADIOGRAPHERS; i++) {
-            radiographers[i] = new Radiographer(this);
+            radiographers[i] = new Radiographer(this, i+1);
         }
     }
 
@@ -331,40 +301,23 @@ public class Hospital {
             }
             for (Sanitary thread : doctors) {
                 thread.interrupt();
-            }
-            for (Sanitary thread : doctors) {
                 thread.join();
             }
             for (Specialist thread : specialists) {
                 thread.interrupt();
-            }
-            for (Specialist thread : specialists) {
                 thread.join();
             }
             for (Radiographer thread : radiographers) {
                 thread.interrupt();
-            }
-            for (Radiographer thread : radiographers) {
                 thread.join();
             }
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public void interruptThreads() {
-        for (Patient thread : patients) {
-            thread.interrupt();
-        }
-        for (Sanitary thread : doctors) {
-            thread.interrupt();
-        }
-        for (Specialist thread : specialists) {
-            thread.interrupt();
-        }
-        for (Radiographer thread : radiographers) {
-            thread.interrupt();
-        }
+    public int getTotalTime() {
+        return this.totalTime;
     }
 
 }
