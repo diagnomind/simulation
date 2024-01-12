@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Hospital {
 
-    private static final  int CAPACITY = 20;
+    private static final int CAPACITY = 20;
     private static final int NUM_DOCTORS = 4;
     private static final int NUM_PATIENTS = 50;
 
@@ -52,7 +52,7 @@ public class Hospital {
         this.patientReadyForDiagnosis = false;
         this.specialistReady = true;
         this.firstRoomFullBool = false;
-        this.secondRoomFullBool=false;
+        this.secondRoomFullBool = false;
 
         this.numPatientsEntered = 0;
         this.numPatientsRadiography = 0;
@@ -84,7 +84,7 @@ public class Hospital {
             }
             while (firstRoomFullBool) {
                 System.out.println("Waiting room is full");
-                //mutex.unlock();
+                // mutex.unlock();
                 firstWaitingRoomFull.await();
             }
             numPatientsEntered++;
@@ -131,12 +131,12 @@ public class Hospital {
         mutex.lock();
         try {
             if (numPatientsRadiography == CAPACITY) {
-                //throw new NullPointerException("waiting room is full");
-                secondRoomFullBool=true;
+                // throw new NullPointerException("waiting room is full");
+                secondRoomFullBool = true;
             }
-            while(secondRoomFullBool){
+            while (secondRoomFullBool) {
                 System.out.println("Waiting room for radiography full");
-                //mutex.unlock();
+                // mutex.unlock();
                 secondWaitingRoomFull.await();
             }
             numPatientsRadiography++;
@@ -176,6 +176,14 @@ public class Hospital {
         }
     }
 
+    public boolean isPatientReadyToSeeRadiographer() {
+        return patientReadyToSeeRadiographer;
+    }
+
+    public void setPatientReadyToSeeRadiographer(boolean patientReadyToSeeRadiographer) {
+        this.patientReadyToSeeRadiographer = patientReadyToSeeRadiographer;
+    }
+
     /* Radiographer */
     public void sendImageToModel() {
         /* Conseguir el diagnosis del modelo y depositarlo */
@@ -185,7 +193,9 @@ public class Hospital {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             int response = connection.getResponseCode();
             if (response == 200) {
-                /* Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo */
+                /*
+                 * Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo
+                 */
                 Diagnosis resultado = new Diagnosis(true);
                 diagnosisToAprove.put(resultado);
             } else {
@@ -205,7 +215,10 @@ public class Hospital {
         try {
             /* Tiempo en el que el radiografo interpreta la imagen */
             Thread.sleep(2000);
-            /* Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de las veces sea erroneo por ejemplo */
+            /*
+             * Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de
+             * las veces sea erroneo por ejemplo
+             */
             Diagnosis resultado = new Diagnosis(true);
             diagnosisToAprove.put(resultado);
             specialistWait.signal();
@@ -219,7 +232,7 @@ public class Hospital {
         mutex.lock();
         try {
             while (diagnosisToAprove.isEmpty()) {
-                specialistWait.await();   
+                specialistWait.await();
             }
             diagnosisToAprove.take();
             /* Tiempo para hacer un diagnostico */
@@ -235,7 +248,7 @@ public class Hospital {
         mutex.lock();
         try {
             while (diagnosisToAprove.isEmpty() && specialistReady) {
-                specialistWait.await();   
+                specialistWait.await();
             }
             specialistReady = false;
             diagnosisToAprove.take();
@@ -249,32 +262,32 @@ public class Hospital {
     }
 
     // public void getFinalResult() throws InterruptedException {
-    //     mutex.lock();
-    //     try {
-    //         while (!patientReadyForDiagnosis) {
-    //             patientWait.await();
-    //         }
-    //         specialistReady = false;
-    //         System.out.println("Specialist giving the final diagnosis to the patient.");
-    //         Thread.sleep(3000);
-    //         System.out.println("Patient leaves");
-    //         specialistReady = true;
-    //     } finally {
-    //         mutex.unlock();
-    //     }
+    // mutex.lock();
+    // try {
+    // while (!patientReadyForDiagnosis) {
+    // patientWait.await();
+    // }
+    // specialistReady = false;
+    // System.out.println("Specialist giving the final diagnosis to the patient.");
+    // Thread.sleep(3000);
+    // System.out.println("Patient leaves");
+    // specialistReady = true;
+    // } finally {
+    // mutex.unlock();
+    // }
     // }
 
     /* Nurse */
     // public void sendDiagnosisToPatient() throws Exception {
-    //     mutex.lock();
-    //     try {
-    //         List<Diagnosis> resultToSend = new ArrayList<>();
-    //         while (!diagnosisToAprove.isEmpty()) {
-    //             resultToSend.add(diagnosisToAprove.take());
-    //         }
-    //     } finally {
-    //         mutex.unlock();
-    //     }
+    // mutex.lock();
+    // try {
+    // List<Diagnosis> resultToSend = new ArrayList<>();
+    // while (!diagnosisToAprove.isEmpty()) {
+    // resultToSend.add(diagnosisToAprove.take());
+    // }
+    // } finally {
+    // mutex.unlock();
+    // }
     // }
 
     public void startThreads() {
@@ -318,8 +331,20 @@ public class Hospital {
     public int getNumPatientsRadiography() {
         return numPatientsRadiography;
     }
-    
+
     public int getNumPatients() {
         return patients.length;
     }
+
+    public Condition getSpecialistWait() {
+        return specialistWait;
+    }
+
+    public void setSpecialistWait(Condition specialistWait) {
+        this.specialistWait = specialistWait;
+    }
+
+    
+
+    
 }
