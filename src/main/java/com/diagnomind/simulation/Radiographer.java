@@ -25,8 +25,14 @@ public class Radiographer extends Thread {
                 hospital.sendImageToSpecialist();
                 // hospital.sendImageToModel();
             } catch (InterruptedException e) {
+                //Thread.currentThread().interrupt();
                 System.out.println(e.toString());
             } 
         }
+    }
+
+    public Exception InterruptedException() throws java.lang.InterruptedException {
+        // TODO Auto-generated method stub
+        throw new InterruptedException("Unimplemented method 'getUncaughtException'");
     }
 }
