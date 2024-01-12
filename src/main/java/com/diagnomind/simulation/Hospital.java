@@ -3,7 +3,6 @@ package com.diagnomind.simulation;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Condition;
@@ -12,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Hospital {
 
-    private static final  int CAPACITY = 5;
+    private static final  int CAPACITY = 3;
     private static final int NUM_DOCTORS = 1;
     private static final int NUM_PATIENTS = 10;
     private static final int NUM_RADIOGRAPHERS = 2;
@@ -30,6 +29,9 @@ public class Hospital {
     private int numPatientsEntered;
     private int numPatientsRadiography;
     private int numRadiographys;
+    public int totalTime;
+    private int numResults;
+
     private Lock mutex;
     private Condition docWait;
     private Condition patientWait;
@@ -40,8 +42,8 @@ public class Hospital {
     private Condition secondWaitingRoomFull;
     private BlockingQueue<Patient> firstWaitingRoom;
     private BlockingQueue<Patient> secondWaitingRoom;
-    Map<Integer, BlockingQueue<Patient>> waitingRooms;
     private BlockingQueue<Diagnosis> diagnosisToAprove;
+    private BlockingQueue<Patient> patientResults;
 
     public Hospital() {
         this.patients = new Patient[NUM_PATIENTS];
@@ -56,6 +58,8 @@ public class Hospital {
         this.numPatientsEntered = 0;
         this.numPatientsRadiography = 0;
         this.numRadiographys = 0;
+        this.numResults = 0;
+        this.totalTime = 0;
 
         this.mutex = new ReentrantLock();
         this.docWait = mutex.newCondition();
@@ -69,6 +73,7 @@ public class Hospital {
         this.firstWaitingRoom = new LinkedBlockingQueue<>();
         this.secondWaitingRoom = new LinkedBlockingQueue<>();
         this.diagnosisToAprove = new LinkedBlockingQueue<>();
+        this.patientResults = new LinkedBlockingQueue<>();
     }
 
     /* Patient */
@@ -77,7 +82,7 @@ public class Hospital {
         mutex.lock();
         try {
             if (!patient.getItsAttended()) {
-                System.out.println(patient.getName() + " enters the hospital");
+                System.out.println("[" + patient.getName() + "] enters the hospital");
                 while (numPatientsEntered == CAPACITY) {
                     System.out.println("[Waitingroom 1]: Full");
                     firstWaitingRoomFull.await();
@@ -91,6 +96,7 @@ public class Hospital {
                     docWait.signal();
                     patientWait.await();
                 }
+                
                 docReady = false;
                 System.out.println("[Waitingroom 1]: " + patient.getName() +  " gets out");
                 numPatientsEntered--;
@@ -145,6 +151,7 @@ public class Hospital {
                 System.out.println("[Waitingroom 2]: " + patient.getName() +  " gets out");
                 numPatientsRadiography--;
                 secondWaitingRoomFull.signal();
+                patientWaitRadiography.signal();
                 patient.radiographyDone();
             }
         } finally {
@@ -162,7 +169,7 @@ public class Hospital {
             }
             radReady = false;
             Patient toEvaluate = secondWaitingRoom.take();
-            System.out.println("\t[Radiographer]: " +toEvaluate.getName());
+            System.out.println("\t[Radiographer]: " + toEvaluate.getName());
             Thread.sleep(1000);
             System.out.println("\t\t[Radiographer]: Radiography done");
             radReady = true;
@@ -177,21 +184,24 @@ public class Hospital {
 
     /* Radiographer */
     @SuppressWarnings("java:S106")
-    public void sendImageToModel() throws InterruptedException, IOException {
+    public void sendImageToModel(Patient diagnosisPatient) throws InterruptedException, IOException {
         /* Conseguir el diagnosis del modelo y depositarlo */
         mutex.lock();
         try {
-            URL url = new URL("");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            int response = connection.getResponseCode();
-            if (response == 200) {
-                /* Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo */
-                //Diagnosis resultado = new Diagnosis(true);
-                //diagnosisToAprove.put(resultado);
-            } else {
-                System.out.println("\tError connecting to the server");
+            if (numRadiographys != 0) {
+                URL url = new URL("");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                int response = connection.getResponseCode();
+                if (response == 200) {
+                    /* Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo */
+                    Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
+                    diagnosisToAprove.put(resultado);
+                } else {
+                    System.out.println("\tError connecting to the server");
+                }
+                numRadiographys--;
+                specialistWait.signal();
             }
-            specialistWait.signal();
         } finally {
             mutex.unlock();
         }
@@ -229,9 +239,13 @@ public class Hospital {
             Patient diagnosedPatient = diagno.getPatient();
             /* Tiempo para hacer un diagnostico */
             Thread.sleep(2000);
-            System.out.println("\t\t\t\t[Specialist]: Diagnosis complete for "+diagnosedPatient.getName());
+            System.out.println("\t\t\t\t[Specialist]: Diagnosis complete for "+ diagnosedPatient.getName());
             diagnosedPatient.setTiempoFin(System.currentTimeMillis());
-            System.out.println("\t\t\t\t["+diagnosedPatient.getName()+"]: Total time: "+diagnosedPatient.calcularTiempoEjecucion());
+            System.out.println("\t\t\t\t[" + diagnosedPatient.getName() + "] Total time: " + diagnosedPatient.calcularTiempoEjecucion());
+            totalTime += diagnosedPatient.calcularTiempoEjecucion();
+            patientResults.put(diagnosedPatient);
+            numResults++;
+            // finalResult.signal();
         } finally {
             mutex.unlock();
         }
@@ -256,34 +270,29 @@ public class Hospital {
         }
     }
 
-    // public void getFinalResult() throws InterruptedException {
-    //     mutex.lock();
-    //     try {
-    //         while (!patientReadyForDiagnosis) {
-    //             patientWait.await();
-    //         }
-    //         specialistReady = false;
-    //         System.out.println("Specialist giving the final diagnosis to the patient.");
-    //         Thread.sleep(3000);
-    //         System.out.println("Patient leaves");
-    //         specialistReady = true;
-    //     } finally {
-    //         mutex.unlock();
-    //     }
-    // }
+    @SuppressWarnings("java:S106")
+    public void getFinalResult(Patient patient) throws InterruptedException {
+        mutex.lock();
+        try {
+            if (!patientResults.isEmpty() && patientResults.take().equals(patient)) { 
+                // while (patientResults.isEmpty()) {
+                //     finalResult.await();
+                // }
+                // specialistReady = false;
+                System.out.println("\t\t\t\t\t[" + patient.getName() + "]: Has received the result");
+                Thread.sleep(2000);
+                System.out.println("\t\t\t\t\t[" + patient.getName() + "]: Leaves the hospital");
+                // specialistReady = true;
+                numResults--;
+            }
+        } finally {
+            mutex.unlock();
+        }
+    }
 
-    /* Nurse */
-    // public void sendDiagnosisToPatient() throws Exception {
-    //     mutex.lock();
-    //     try {
-    //         List<Diagnosis> resultToSend = new ArrayList<>();
-    //         while (!diagnosisToAprove.isEmpty()) {
-    //             resultToSend.add(diagnosisToAprove.take());
-    //         }
-    //     } finally {
-    //         mutex.unlock();
-    //     }
-    // }
+    //TODO: Hacer que quien entregue los resultados sea el medico (añadir una funcion al medico para que cuando este libre de los resultados)
+
+    // public void
 
     public void createThreads() {
         for (int i = 0; i < NUM_PATIENTS; i++) {
