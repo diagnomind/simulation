@@ -26,6 +26,7 @@ public class Hospital {
     private int numPatientsRadiography;
     private int numRadiographys;
     private int totalTime;
+    private int availableDoctors;
 
     private Lock mutex;
     private Condition docWait;
@@ -50,6 +51,7 @@ public class Hospital {
         this.numRadiographys = 0;
         this.numPatientsEntered = 0;
         this.numPatientsRadiography = 0;
+        this.availableDoctors = 0;
 
         this.mutex = new ReentrantLock();
         this.docWait = mutex.newCondition();
@@ -103,8 +105,8 @@ public class Hospital {
     public void attendPacient() throws InterruptedException {
         mutex.lock();
         try {
-            /* This 'if' works but the radiographys have preference */
-            if (patientResults.isEmpty() && diagnosisToAprove.isEmpty()) {
+            if (availableDoctors < NUM_DOCTORS/2) {
+                availableDoctors++;
                 while (firstWaitingRoom.isEmpty()) {
                     docWait.await();
                 }
@@ -114,6 +116,7 @@ public class Hospital {
                 System.out.println("\t\t["+Thread.currentThread().getName()+"]: Evaluation done");
                 toEvaluate.itsAttended();
                 patientWait.signal();
+                availableDoctors--;
             }
         } finally {
             mutex.unlock();
@@ -219,10 +222,9 @@ public class Hospital {
         mutex.lock();
         try {
             while (diagnosisToAprove.isEmpty()) {
-                specialistWait.await();   
+                specialistWait.await();
             }
-            Diagnosis diagno = diagnosisToAprove.take();
-            Patient diagnosedPatient = diagno.getPatient();
+            Patient diagnosedPatient = diagnosisToAprove.take().getPatient();
             /* Tiempo para hacer un diagnostico */
             Thread.sleep(2000);
             System.out.println("\t\t\t\t["+Thread.currentThread().getName()+"]: Diagnosis complete for "+diagnosedPatient.getName());
@@ -257,10 +259,11 @@ public class Hospital {
     public void giveFinalResult() throws InterruptedException {
         mutex.lock();
         try {
-            if (!patientResults.isEmpty()) {
+            /* This works but has preferency, over doing a consult */
+            while (!patientResults.isEmpty()) {
                 Patient patient = patientResults.take();
                 System.out.println("\t\t\t\t\t["+Thread.currentThread().getName()+"]: "+patient.getName()+" has received the result");
-                Thread.sleep(2000);
+                Thread.sleep(1000);
                 System.out.println("\t\t\t\t\t["+Thread.currentThread().getName()+"]: "+patient.getName()+" leaves the hospital");
             }
         } finally {
