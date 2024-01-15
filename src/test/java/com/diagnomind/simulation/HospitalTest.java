@@ -56,7 +56,7 @@ public class HospitalTest {
 
         new Thread(() -> {
             try {
-                //Thread.sleep(1000);
+                Thread.sleep(1000);
                 hospital.firstWaitingRoom(patient);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -65,7 +65,7 @@ public class HospitalTest {
 
         new Thread(() -> {
             try {
-                //Thread.sleep(1000);
+                Thread.sleep(1000);
                 hospital.attendPacient();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
