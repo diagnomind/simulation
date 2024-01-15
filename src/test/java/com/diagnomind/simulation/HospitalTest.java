@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -28,15 +30,11 @@ public class HospitalTest {
         hospital = new Hospital();
         hospital.createThreads();
     }
-
+    
     @Test
-    public void startThreadsTest() {
-
-    }
-
-    @Test
-    public void waitEndOfThreadsTest() {
-
+    public void startAndEndThreadsTest() {
+        hospital.startThreads();
+        hospital.waitEndOfThreads();
     }
 
     @Test
@@ -45,9 +43,37 @@ public class HospitalTest {
         hospital.firstWaitingRoom(patientMock);
         assertFalse(hospital.getFirstWaitingRoom().isEmpty());
     }
+
+    @Test
+    public void firstWaitingRoomNotEnterTest() throws InterruptedException {
+        when(patientMock.getItsAttended()).thenReturn(true);
+        hospital.firstWaitingRoom(patientMock);
+        assertTrue(hospital.getFirstWaitingRoom().isEmpty());
+    }
     
     @Test
     public void firstWaitingRoomTestFirstWait() {
+
+        new Thread(() -> {
+            try {
+                //Thread.sleep(1000);
+                hospital.firstWaitingRoom(patient);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+
+        new Thread(() -> {
+            try {
+                //Thread.sleep(1000);
+                hospital.attendPacient();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+
+        assertTrue(hospital.getFirstWaitingRoom().isEmpty());
+        //assertTrue(patient.getItsAttended());
 
     }
 
@@ -63,6 +89,16 @@ public class HospitalTest {
         assertTrue(patient.getItsAttended());
     }
 
+    @Test
+    public void notAttendPacientTest() throws InterruptedException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        hospital.getFirstWaitingRoom().put(patient);
+        Field availableDoctors = Hospital.class.getDeclaredField("availableDoctors");
+        availableDoctors.setAccessible(true);
+        availableDoctors.set(hospital, 100);
+        hospital.attendPacient();
+        assertFalse(patient.getItsAttended());
+    }
+
     @Test 
     public void attendPacientTestWait() {
 
@@ -76,6 +112,15 @@ public class HospitalTest {
         assertFalse(hospital.getSecondWaitingRoom().isEmpty());
     }
 
+    
+    @Test
+    public void secondWaitingRoomNotEnterTest() throws InterruptedException {
+        when(patientMock.getCanDoRadiography()).thenReturn(true);
+        when(patientMock.getRadiographyDone()).thenReturn(true);
+        hospital.secondWaitingRoom(patientMock);
+        assertTrue(hospital.getSecondWaitingRoom().isEmpty());
+    }
+
     @Test
     public void secondWaitingRoomTestFirstWait() {
 
@@ -83,7 +128,7 @@ public class HospitalTest {
 
     @Test
     public void secondWaitingRoomTestSecondWait() {
-
+        
     }
 
     @Test
@@ -110,6 +155,15 @@ public class HospitalTest {
         numRadiographys.set(hospital, 1);
         hospital.sendImageToSpecialist(patient);
         assertFalse(hospital.getDiagnosisToAprove().isEmpty());
+    }
+
+    @Test
+    public void dontSendImageToSpecialistTest() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, InterruptedException {
+        Field numRadiographys = Hospital.class.getDeclaredField("numRadiographys");
+        numRadiographys.setAccessible(true);
+        numRadiographys.set(hospital, 0);
+        hospital.sendImageToSpecialist(patient);
+        assertTrue(hospital.getDiagnosisToAprove().isEmpty());
     }
 
     @Test
