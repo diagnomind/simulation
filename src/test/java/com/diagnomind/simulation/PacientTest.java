@@ -51,8 +51,10 @@ public class PacientTest {
 
     @Test
     public void CanDoRadiographyTest() {
+
         pacientTest.sendToRadiography();
         assertTrue(pacientTest.getCanDoPadiography());
+
     }
 
     @Test

@@ -3,10 +3,12 @@ package com.diagnomind.simulation;
 public class Radiographer extends Thread {
 
     Hospital hospital;
+    int id;
 
-    public Radiographer(Hospital hospital) {
-        super("Radiographer");
+    public Radiographer(Hospital hospital, int id) {
+        super("Radiographer " + id);
         this.hospital = hospital;
+        this.id = id;
     }
 
     public Hospital getHospital() {
@@ -18,15 +20,16 @@ public class Radiographer extends Thread {
     }
 
     @Override
+    @SuppressWarnings("java:S106")
     public void run() {
         while (!this.isInterrupted()) {
             try {
                 hospital.doRadiographyToPacient();
-                hospital.sendImageToSpecialist();
-                // hospital.sendImageToModel();
             } catch (InterruptedException e) {
-                System.out.println(e.toString());
-            } 
+
+                this.interrupt();
+            }
+
         }
     }
 }

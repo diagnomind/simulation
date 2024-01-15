@@ -16,7 +16,7 @@ public class RadiographerTest {
     @Before
     public void setup() {
         hospitalMock = mock(Hospital.class);
-        radioTest = new Radiographer(hospitalMock);
+        radioTest = new Radiographer(hospitalMock, 1);
     }
 
     @After
