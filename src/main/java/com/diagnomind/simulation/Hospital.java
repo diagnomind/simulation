@@ -327,24 +327,20 @@ public class Hospital {
         return this.totalTime;
     }
 
-    public int getNumPatientsEntered() {
-        return numPatientsEntered;
+    public BlockingQueue<Patient> getFirstWaitingRoom() {
+        return this.firstWaitingRoom;
     }
 
-    public int getNumPatientsRadiography() {
-        return numPatientsRadiography;
+    public BlockingQueue<Patient> getSecondWaitingRoom() {
+        return this.secondWaitingRoom;
     }
 
-    public int getNumPatients() {
-        return patients.length;
+    public BlockingQueue<Diagnosis> getDiagnosisToAprove() {
+        return this.diagnosisToAprove;
     }
 
-    public Condition getSpecialistWait() {
-        return specialistWait;
+    public BlockingQueue<Patient> getPatientResults() {
+        return this.patientResults;
     }
 
-    public void setSpecialistWait(Condition specialistWait) {
-        this.specialistWait = specialistWait;
-    }
-    
 }
