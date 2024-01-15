@@ -26,13 +26,10 @@ public class Radiographer extends Thread {
             try {
                 hospital.doRadiographyToPacient();
             } catch (InterruptedException e) {
+
                 this.interrupt();
             }
-        }
-    }
 
-    public Exception InterruptedException() throws java.lang.InterruptedException {
-        // TODO Auto-generated method stub
-        throw new InterruptedException("Unimplemented method 'getUncaughtException'");
+        }
     }
 }
