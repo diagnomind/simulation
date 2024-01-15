@@ -2,6 +2,8 @@ package com.diagnomind.simulation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.timeout;
 
 import org.junit.After;
 import org.junit.Before;
@@ -10,72 +12,99 @@ import org.mockito.Mockito;
 
 public class PacientTest {
 
-    Patient pacient;
-    Hospital hospital;
+    Patient pacientTest;
+    Hospital hospitalMock;
 
     @Before
     public void constructorTest() {
         String name = "Pacient test";
-        hospital = Mockito.mock(Hospital.class);
+        hospitalMock = Mockito.mock(Hospital.class);
         int id = 0;
-        pacient = new Patient(name, id, hospital);
+        pacientTest = new Patient(name, id, hospitalMock);
     }
 
     @After
     public void clear() {
-        hospital = null;
+        hospitalMock = null;
     }
 
     @Test
     public void tiempoInitTest() {
-        pacient.setTiempoInit(1);
-        assertEquals(1, pacient.getTiempoInit());
+        pacientTest.setTiempoInit(1);
+        assertEquals(1, pacientTest.getTiempoInit());
         ;
     }
 
     @Test
     public void tiempoFinTest() {
-        pacient.setTiempoFin(1);
-        assertEquals(1, pacient.getTiempoFin());
+        pacientTest.setTiempoFin(1);
+        assertEquals(1, pacientTest.getTiempoFin());
         ;
     }
 
     @Test
     public void calcularTiempoEjecucionTest() {
-        pacient.setTiempoInit(0);
-        pacient.setTiempoFin(5);
-        assertEquals(5, pacient.calcularTiempoEjecucion());
+        pacientTest.setTiempoInit(0);
+        pacientTest.setTiempoFin(5);
+        assertEquals(5, pacientTest.calcularTiempoEjecucion());
     }
 
     @Test
     public void CanDoRadiographyTest() {
-        pacient.sendToRadiography();
-        assertTrue(pacient.getCanDoPadiography());
+        pacientTest.sendToRadiography();
+        assertTrue(pacientTest.getCanDoPadiography());
     }
 
     @Test
     public void attendedTest() {
-        pacient.itsAttended();
-        assertTrue(pacient.getItsAttended());
+        pacientTest.itsAttended();
+        assertTrue(pacientTest.getItsAttended());
     }
 
     @Test
     public void radiographyTest() {
-        pacient.radiographyDone();
-        assertTrue(pacient.getRadiographyDone());
+        pacientTest.radiographyDone();
+        assertTrue(pacientTest.getRadiographyDone());
+    }
+
+    @Test
+    public void interruptTest() {
+
+        pacientTest.start();
+        // timeout(3000);
+
+        try {
+            Thread.sleep(3000);
+            doThrow(new InterruptedException()).when(hospitalMock).firstWaitingRoom(pacientTest);
+            hospitalMock.firstWaitingRoom(pacientTest);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        pacientTest.interrupt();
+        assertTrue(pacientTest.isInterrupted());
     }
 
     @Test
     public void runTest() {
-        pacient.start();
-        pacient.interrupt();
-        assertTrue(pacient.isInterrupted());
-    }
+        // Iniciar el hilo
+        pacientTest.start();
 
-    //ns porque no hace la exception
-    @Test()
-    public void runTestException() throws InterruptedException {
-        pacient.start();
-        Mockito.doThrow(new InterruptedException()).when(hospital).firstWaitingRoom(pacient);
+        try {
+            // Esperar un tiempo corto para darle al hilo la oportunidad de ejecutar algunas
+            // iteraciones
+            Thread.sleep(5000);
+            // Interrumpir el hilo
+            pacientTest.interrupt();
+
+            // Esperar a que el hilo termine
+            pacientTest.join();
+
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        pacientTest.interrupt();
+        assertTrue(pacientTest.isInterrupted());
     }
 }

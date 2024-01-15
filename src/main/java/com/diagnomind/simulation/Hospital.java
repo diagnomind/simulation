@@ -343,8 +343,4 @@ public class Hospital {
     public void setSpecialistWait(Condition specialistWait) {
         this.specialistWait = specialistWait;
     }
-
-    
-
-    
 }
