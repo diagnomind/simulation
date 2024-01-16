@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -83,7 +84,7 @@ public class RadiographerTest {
 
 
     @Test
-    public void testInterruptionHandling() throws InterruptedException {
+    public void testInterruptionHandling() throws InterruptedException, IOException {
         // Iniciar el hilo
         radioTest.start();
 

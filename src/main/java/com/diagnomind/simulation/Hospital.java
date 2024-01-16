@@ -17,6 +17,8 @@ import org.springframework.web.client.RestTemplate;
 
 public class Hospital {
 
+    private Boolean useModel;
+
     private static final int CAPACITY = 4;
     private static final int NUM_DOCTORS = 3;
     private static final int NUM_PATIENTS = 10;
@@ -54,6 +56,8 @@ public class Hospital {
     private BlockingQueue<Patient> patientResults;
 
     public Hospital() {
+        this.useModel = false;
+
         this.patients = new Patient[NUM_PATIENTS];
         this.doctors = new Sanitary[NUM_DOCTORS];
         this.specialists = new Specialist[NUM_SPECIALISTS];
@@ -164,7 +168,7 @@ public class Hospital {
 
     /* Radiographer */
     @SuppressWarnings("java:S106")
-    public void doRadiographyToPacient() throws InterruptedException {
+    public void doRadiographyToPacient() throws InterruptedException, IOException {
         mutex.lock();
         try {
             while (secondWaitingRoom.isEmpty()) {
@@ -176,7 +180,11 @@ public class Hospital {
             System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Radiography done");
             toEvaluate.radiographyDone();
             numRadiographys++;
-            sendImageToSpecialist(toEvaluate);
+            if (Boolean.TRUE.equals(useModel)) {
+                sendImageToModel(toEvaluate);
+            } else {
+                sendImageToSpecialist(toEvaluate);
+            }
             patientWaitRadiography.signal();
         } finally {
             mutex.unlock();
@@ -186,7 +194,6 @@ public class Hospital {
     /* Radiographer */
     @SuppressWarnings("java:S106")
     public void sendImageToModel(Patient diagnosisPatient) throws InterruptedException, IOException {
-        /* Conseguir el diagnosis del modelo y depositarlo */
         mutex.lock();
         try {
             if (numRadiographys != 0) {
@@ -199,9 +206,6 @@ public class Hospital {
                 int status = response.getStatusCode().value();
 
                 if (status == 200) {
-                    /*
-                     * Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo
-                     */
                     Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
                     diagnosisToAprove.put(resultado);
                 } else {
@@ -223,10 +227,6 @@ public class Hospital {
             if (numRadiographys != 0) {
                 /* Tiempo en el que el radiografo interpreta la imagen */
                 Thread.sleep(2000);
-                /*
-                 * Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de
-                 * las veces sea erroneo por ejemplo
-                 */
                 Diagnosis resultado = new Diagnosis(false, diagnosisPatient);
                 diagnosisToAprove.put(resultado);
                 System.out.println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: Image sent");

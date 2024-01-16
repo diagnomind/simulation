@@ -190,7 +190,7 @@ public class HospitalTest {
         new Thread(() -> {
             try {
                 hospital.doRadiographyToPacient();
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IOException e) {
                 Thread.currentThread().interrupt();
             }
         }).start();
@@ -198,7 +198,7 @@ public class HospitalTest {
     }
 
     @Test
-    public void doRadiographyToPacientTest() throws InterruptedException {
+    public void doRadiographyToPacientTest() throws InterruptedException, IOException {
         hospital.getSecondWaitingRoom().put(patient);
         hospital.doRadiographyToPacient();
         assertTrue(patient.getRadiographyDone());
@@ -234,6 +234,9 @@ public class HospitalTest {
     @Test
     public void doDiagnosisTest() throws InterruptedException {
         hospital.getDiagnosisToAprove().put(diagnosis);
+        hospital.doDiagnosis();
+        assertFalse(hospital.getPatientResults().isEmpty());
+        hospital.getDiagnosisToAprove().put(new Diagnosis(false, patient));
         hospital.doDiagnosis();
         assertFalse(hospital.getPatientResults().isEmpty());
     }
