@@ -9,9 +9,11 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,7 +58,8 @@ public class HospitalTest {
 
         new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                Awaitility.await().atLeast(1000,TimeUnit.MILLISECONDS);
+                //Thread.sleep(1000);
                 hospital.firstWaitingRoom(patient);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -65,7 +68,8 @@ public class HospitalTest {
 
         new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                Awaitility.await().atLeast(1000,TimeUnit.MILLISECONDS);
+                //Thread.sleep(1000);
                 hospital.attendPacient();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
