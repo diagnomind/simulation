@@ -301,25 +301,21 @@ public class Hospital {
         }
     }
 
-    public void waitEndOfThreads() {
-        try {
-            for (Patient thread : patients) {
-                thread.join();
-            }
-            for (Sanitary thread : doctors) {
-                thread.interrupt();
-                thread.join();
-            }
-            for (Specialist thread : specialists) {
-                thread.interrupt();
-                thread.join();
-            }
-            for (Radiographer thread : radiographers) {
-                thread.interrupt();
-                thread.join();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    public void waitEndOfThreads() throws InterruptedException {
+        for (Patient thread : patients) {
+            thread.join();
+        }
+        for (Sanitary thread : doctors) {
+            thread.interrupt();
+            thread.join();
+        }
+        for (Specialist thread : specialists) {
+            thread.interrupt();
+            thread.join();
+        }
+        for (Radiographer thread : radiographers) {
+            thread.interrupt();
+            thread.join();
         }
     }
 

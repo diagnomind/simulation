@@ -9,8 +9,6 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +30,7 @@ public class HospitalTest {
     }
     
     @Test
-    public void startAndEndThreadsTest() {
+    public void startAndEndThreadsTest() throws InterruptedException {
         hospital.startThreads();
         hospital.waitEndOfThreads();
     }
@@ -163,10 +161,19 @@ public class HospitalTest {
                 Thread.currentThread().interrupt();
             }
         });
+        Thread thread3 = new Thread(() -> {
+            try {
+                hospital.secondWaitingRoom(patientMock);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
         thread1.start();
         thread2.start();
+        thread3.start();
         thread1.join();
         thread2.join();
+        thread3.join();
 
         assertFalse(hospital.getSecondWaitingRoom().isEmpty());
     }
@@ -196,11 +203,6 @@ public class HospitalTest {
         hospital.doRadiographyToPacient();
         assertTrue(patient.getRadiographyDone());
     }
-
-    // @Test
-    // public void doRadiographyToPacientTestWait() throws InterruptedException {
-    
-    // }
 
     @Test
     public void sendImageToModelTest() {
