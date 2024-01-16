@@ -1,13 +1,19 @@
 package com.diagnomind.simulation;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.nio.file.Files;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 public class Hospital {
 
@@ -16,6 +22,12 @@ public class Hospital {
     private static final int NUM_PATIENTS = 10;
     private static final int NUM_RADIOGRAPHERS = 2;
     private static final int NUM_SPECIALISTS = 2;
+
+    private static final String SPACE_1 = "\t";
+    private static final String SPACE_2 = "\t\t";
+    private static final String SPACE_3 = "\t\t\t";
+    private static final String SPACE_4 = "\t\t\t\t";
+    private static final String SPACE_5 = "\t\t\t\t\t";
 
     private Patient[] patients;
     private Sanitary[] doctors;
@@ -111,9 +123,9 @@ public class Hospital {
                     docWait.await();
                 }
                 Patient toEvaluate = firstWaitingRoom.take();
-                System.out.println("\t[" + Thread.currentThread().getName() + "]: Evaluating " + toEvaluate.getName());
+                System.out.println(SPACE_1 + "[" + Thread.currentThread().getName() + "]: Evaluating " + toEvaluate.getName());
                 Thread.sleep(1000);
-                System.out.println("\t\t[" + Thread.currentThread().getName() + "]: Evaluation done");
+                System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Evaluation done");
                 toEvaluate.itsAttended();
                 patientWait.signal();
                 availableDoctors--;
@@ -159,9 +171,9 @@ public class Hospital {
                 radWait.await();
             }
             Patient toEvaluate = secondWaitingRoom.take();
-            System.out.println("\t[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
+            System.out.println(SPACE_1 + "[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
             Thread.sleep(1000);
-            System.out.println("\t\t[" + Thread.currentThread().getName() + "]: Radiography done");
+            System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Radiography done");
             toEvaluate.radiographyDone();
             numRadiographys++;
             sendImageToSpecialist(toEvaluate);
@@ -178,17 +190,22 @@ public class Hospital {
         mutex.lock();
         try {
             if (numRadiographys != 0) {
-                URL url = new URL("");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                int response = connection.getResponseCode();
-                if (response == 200) {
+                RestTemplate restTemplate = new RestTemplate();
+                byte[] imageBytes = Files.readAllBytes(new File("src\\main\\java\\com\\diagnomind\\img\\TCGA_CS_4941_19960909_12.tiff").toPath());
+                String url = "https://www.google.com/";
+                HttpHeaders headers = new HttpHeaders();
+                HttpEntity<byte[]> request = new HttpEntity<>(imageBytes, headers);
+                ResponseEntity<byte[]> response = restTemplate.exchange(url, HttpMethod.POST, request, byte[].class);
+                int status = response.getStatusCode().value();
+
+                if (status == 200) {
                     /*
                      * Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo
                      */
                     Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
                     diagnosisToAprove.put(resultado);
                 } else {
-                    System.out.println("\tError connecting to the server");
+                    System.out.println(SPACE_3 + "Error connecting to the server\nCode: " + status);
                 }
                 numRadiographys--;
                 specialistWait.signal();
@@ -212,7 +229,7 @@ public class Hospital {
                  */
                 Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
                 diagnosisToAprove.put(resultado);
-                System.out.println("\t\t\t[" + Thread.currentThread().getName() + "]: Image sent");
+                System.out.println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: Image sent");
                 numRadiographys--;
                 specialistWait.signal();
             }
@@ -231,12 +248,12 @@ public class Hospital {
             }
             Patient diagnosedPatient = diagnosisToAprove.take().getPatient();
             /* Tiempo para hacer un diagnostico */
-            Thread.sleep(2000);
-            System.out.println("\t\t\t\t[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
+            Thread.sleep(3000);
+            System.out.println(SPACE_4 + "[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
                     + diagnosedPatient.getName());
             diagnosedPatient.setTiempoFin(System.currentTimeMillis());
             totalTime += diagnosedPatient.calcularTiempoEjecucion();
-            System.out.println("\t\t\t\t[" + diagnosedPatient.getName() + "] Total time: " + totalTime);
+            System.out.println(SPACE_4 + "[" + diagnosedPatient.getName() + "] Total time: " + totalTime);
             patientResults.put(diagnosedPatient);
         } finally {
             mutex.unlock();
@@ -251,10 +268,14 @@ public class Hospital {
             while (diagnosisToAprove.isEmpty()) {
                 specialistWait.await();
             }
-            diagnosisToAprove.take();
-            Thread.sleep(2000);
-            System.out.println("Diagnosis Complete");
-            patientWait.signal();
+            Patient diagnosedPatient = diagnosisToAprove.take().getPatient();
+            Thread.sleep(1000);
+            System.out.println(SPACE_4 + "[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
+                    + diagnosedPatient.getName());
+            diagnosedPatient.setTiempoFin(System.currentTimeMillis());
+            totalTime += diagnosedPatient.calcularTiempoEjecucion();
+            System.out.println(SPACE_4 + "[" + diagnosedPatient.getName() + "] Total time: " + totalTime);
+            patientResults.put(diagnosedPatient);
         } finally {
             mutex.unlock();
         }
@@ -268,10 +289,10 @@ public class Hospital {
             /* This works but has preferency, over doing a consult */
             while (!patientResults.isEmpty()) {
                 Patient patient = patientResults.take();
-                System.out.println("\t\t\t\t\t[" + Thread.currentThread().getName() + "]: " + patient.getName()
+                System.out.println(SPACE_5 + "[" + Thread.currentThread().getName() + "]: " + patient.getName()
                         + " has received the result");
                 Thread.sleep(1000);
-                System.out.println("\t\t\t\t\t[" + Thread.currentThread().getName() + "]: " + patient.getName()
+                System.out.println(SPACE_5 +"[" + Thread.currentThread().getName() + "]: " + patient.getName()
                         + " leaves the hospital");
             }
         } finally {
