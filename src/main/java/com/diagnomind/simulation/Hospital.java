@@ -239,37 +239,19 @@ public class Hospital {
     }
 
     /* Specialist */
-    @SuppressWarnings("java:S106")
+    @SuppressWarnings({"java:S106", "java:S5411"})
     public void doDiagnosis() throws InterruptedException {
         mutex.lock();
         try {
+            int millis = 0;
             while (diagnosisToAprove.isEmpty()) {
                 specialistWait.await();
             }
-            Patient diagnosedPatient = diagnosisToAprove.take().getPatient();
-            /* Tiempo para hacer un diagnostico */
-            Thread.sleep(3000);
-            System.out.println(SPACE_4 + "[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
-                    + diagnosedPatient.getName());
-            diagnosedPatient.setTiempoFin(System.currentTimeMillis());
-            totalTime += diagnosedPatient.calcularTiempoEjecucion();
-            System.out.println(SPACE_4 + "[" + diagnosedPatient.getName() + "] Total time: " + totalTime);
-            patientResults.put(diagnosedPatient);
-        } finally {
-            mutex.unlock();
-        }
-    }
-
-    /* Specialist */
-    @SuppressWarnings("java:S106")
-    public void doDiagnosisWithModel() throws InterruptedException {
-        mutex.lock();
-        try {
-            while (diagnosisToAprove.isEmpty()) {
-                specialistWait.await();
-            }
-            Patient diagnosedPatient = diagnosisToAprove.take().getPatient();
-            Thread.sleep(1000);
+            Diagnosis diagnosis = diagnosisToAprove.take();
+            Patient diagnosedPatient = diagnosis.getPatient();
+            
+            millis = (diagnosis.getMadeByModel()) ? 1000 : 3000;
+            Thread.sleep(millis);
             System.out.println(SPACE_4 + "[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
                     + diagnosedPatient.getName());
             diagnosedPatient.setTiempoFin(System.currentTimeMillis());
