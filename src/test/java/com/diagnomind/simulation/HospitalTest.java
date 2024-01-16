@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -168,12 +169,30 @@ public class HospitalTest {
                 Thread.currentThread().interrupt();
             }
         });
+        Thread thread4 = new Thread(() -> {
+            try {
+                hospital.secondWaitingRoom(patientMock);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        Thread thread5 = new Thread(() -> {
+            try {
+                hospital.secondWaitingRoom(patientMock);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
         thread1.start();
         thread2.start();
         thread3.start();
+        thread4.start();
+        thread5.start();
         thread1.join();
         thread2.join();
         thread3.join();
+        thread4.join();
+        thread5.join();
 
         assertFalse(hospital.getSecondWaitingRoom().isEmpty());
     }
@@ -205,8 +224,12 @@ public class HospitalTest {
     }
 
     @Test
-    public void sendImageToModelTest() {
-
+    public void sendImageToModelTest() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, InterruptedException, IOException {
+        Field numRadiographys = Hospital.class.getDeclaredField("numRadiographys");
+        numRadiographys.setAccessible(true);
+        numRadiographys.set(hospital, 1);
+        // hospital.sendImageToModel(patient);
+        // assertFalse(hospital.getDiagnosisToAprove().isEmpty());
     }
 
     @Test
@@ -235,8 +258,10 @@ public class HospitalTest {
     }
 
     @Test
-    public void doDiagnosisTestWait() throws InterruptedException, NoSuchFieldException, SecurityException {
-        
+    public void doDiagnosisWithModelTest() throws InterruptedException {
+        hospital.getDiagnosisToAprove().put(diagnosis);
+        hospital.doDiagnosisWithModel();
+        assertFalse(hospital.getPatientResults().isEmpty());
     }
 
     @Test
