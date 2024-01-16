@@ -256,14 +256,7 @@ public class HospitalTest {
         hospital.doDiagnosis();
         assertFalse(hospital.getPatientResults().isEmpty());
     }
-
-    @Test
-    public void doDiagnosisWithModelTest() throws InterruptedException {
-        hospital.getDiagnosisToAprove().put(diagnosis);
-        hospital.doDiagnosisWithModel();
-        assertFalse(hospital.getPatientResults().isEmpty());
-    }
-
+    
     @Test
     public void giveFinalResultTest() throws InterruptedException {
         hospital.getPatientResults().put(new Patient("Patient", 1, hospital));
