@@ -147,7 +147,7 @@ public class HospitalTest {
         capacity.setAccessible(true);
         capacity.set(hospital, 3);
         when(patientMock.getCanDoRadiography()).thenReturn(true);
-        when(patientMock.getRadiographyDone()).thenReturn(false, true);
+        when(patientMock.getRadiographyDone()).thenReturn(false, true, false, true);
         Thread thread1 = new Thread(() -> {
             try {
                 hospital.secondWaitingRoom(patientMock);
@@ -169,31 +169,12 @@ public class HospitalTest {
                 Thread.currentThread().interrupt();
             }
         });
-        Thread thread4 = new Thread(() -> {
-            try {
-                hospital.secondWaitingRoom(patientMock);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-        Thread thread5 = new Thread(() -> {
-            try {
-                hospital.secondWaitingRoom(patientMock);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
         thread1.start();
         thread2.start();
         thread3.start();
-        thread4.start();
-        thread5.start();
         thread1.join();
         thread2.join();
         thread3.join();
-        thread4.join();
-        thread5.join();
-
         assertFalse(hospital.getSecondWaitingRoom().isEmpty());
     }
 

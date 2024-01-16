@@ -227,7 +227,7 @@ public class Hospital {
                  * Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de
                  * las veces sea erroneo por ejemplo
                  */
-                Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
+                Diagnosis resultado = new Diagnosis(false, diagnosisPatient);
                 diagnosisToAprove.put(resultado);
                 System.out.println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: Image sent");
                 numRadiographys--;
