@@ -10,6 +10,7 @@ public class Patient extends Thread {
     boolean itsAttended;
     boolean radiographyDone;
     boolean canDoRadiography;
+    boolean canGetResult;
 
     public Patient(String name, int id, Hospital hospital) {
         super("Patient " + id);
@@ -19,6 +20,7 @@ public class Patient extends Thread {
         this.canDoRadiography = false;
         this.radiographyDone = false;
         this.itsAttended = false;
+        this.canGetResult = false;
     }
 
     public long getTiempoInit() {
@@ -49,6 +51,10 @@ public class Patient extends Thread {
         return this.radiographyDone;
     }
 
+    public boolean canGetResult() {
+        return this.canGetResult;
+    }
+
     public long calcularTiempoEjecucion(){
         return (this.tiempoFin-this.tiempoInit);
     }
@@ -65,12 +71,17 @@ public class Patient extends Thread {
         this.radiographyDone = true;
     }
 
+    public void diagnosisFinished() {
+        this.canGetResult = true;
+    }
+
     @Override
     @SuppressWarnings("java:S106")
     public void run() {
         try {
             hospital.firstWaitingRoom(this);
             hospital.secondWaitingRoom(this);
+            hospital.getFinalResult(this);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

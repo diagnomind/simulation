@@ -22,7 +22,7 @@ public class HospitalTest {
     Patient patientMock;
 
     @Before
-    public void setup() {
+    public void setup() throws InterruptedException {
         patient = new Patient("Patient", 1, hospital);
         diagnosis = new Diagnosis(true, patient);
         patientMock = mock(Patient.class);
@@ -235,19 +235,18 @@ public class HospitalTest {
     public void doDiagnosisTest() throws InterruptedException {
         hospital.getDiagnosisToAprove().put(diagnosis);
         hospital.doDiagnosis();
-        assertFalse(hospital.getPatientResults().isEmpty());
+        assertTrue(diagnosis.getPatient().canGetResult());
         hospital.getDiagnosisToAprove().put(new Diagnosis(false, patient));
         hospital.doDiagnosis();
-        assertFalse(hospital.getPatientResults().isEmpty());
+        assertTrue(diagnosis.getPatient().canGetResult());
     }
     
     @Test
-    public void giveFinalResultTest() throws InterruptedException {
-        hospital.getPatientResults().put(new Patient("Patient", 1, hospital));
-        hospital.getPatientResults().put(new Patient("Patient", 2, hospital));
-        hospital.getPatientResults().put(new Patient("Patient", 3, hospital));
-        hospital.giveFinalResult();
-        assertTrue(hospital.getPatientResults().isEmpty());
+    public void getFinalResultTest() throws InterruptedException {
+        hospital.getAvailableDocs().put(new Sanitary(hospital, 1));
+        when(patientMock.canGetResult()).thenReturn(true);
+        hospital.getFinalResult(patientMock);
+        assertFalse(hospital.getAvailableDocs().isEmpty());
     }
 
     @Test
@@ -276,10 +275,7 @@ public class HospitalTest {
 
     @Test
     public void getPatientResultsTest() throws InterruptedException {
-        BlockingQueue<Patient> queue = new LinkedBlockingQueue<>();
-        queue.put(patient);
-        hospital.getPatientResults().put(patient);
-        assertEquals(queue.take(), hospital.getPatientResults().take());
+        assertFalse(hospital.getAvailableDocs().isEmpty());
     }
 
     @Test
