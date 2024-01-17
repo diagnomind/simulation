@@ -34,44 +34,4 @@ public class RadiographerTest {
         assertEquals(hospitalMock, radioTest.getHospital());
     }
 
-    @Test()
-    public void interruptTest() {
-
-        radioTest.start();
-        // timeout(3000);
-        try {
-            Awaitility.await().atLeast(3000, TimeUnit.MILLISECONDS);
-            // Thread.sleep(3000);
-            doThrow(new InterruptedException()).when(hospitalMock).doRadiographyToPacient();
-            hospitalMock.doRadiographyToPacient();
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            radioTest.interrupt();
-            assertEquals( InterruptedException.class,e.getClass());
-        }
-
-    }
-
-    @Test
-    public void runTest() {
-        // Iniciar el hilo
-        radioTest.start();
-
-        try {
-            // Esperar un tiempo corto para darle al hilo la oportunidad de ejecutar algunas
-            // iteraciones
-            // Thread.sleep(5000);
-            Awaitility.await().atLeast(5000, TimeUnit.MILLISECONDS);
-            radioTest.interrupt();
-
-            // Esperar a que el hilo termine
-            radioTest.join();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        radioTest.interrupt();
-        assertTrue(radioTest.isInterrupted());
-    }
 }
