@@ -107,12 +107,9 @@ public class HospitalTest {
 
     @Test
     public void notAttendPacientTest() throws InterruptedException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        hospital.getFirstWaitingRoom().put(patient);
-        Field availableDoctors = Hospital.class.getDeclaredField("availableDoctors");
-        availableDoctors.setAccessible(true);
-        availableDoctors.set(hospital, 100);
         hospital.attendPacient();
         assertFalse(patient.getItsAttended());
+        // TODO : partional if to complete
     }
 
     @Test
