@@ -1,5 +1,7 @@
 package com.diagnomind.simulation;
 
+import java.io.IOException;
+
 public class Radiographer extends Thread {
 
     Hospital hospital;
@@ -25,8 +27,7 @@ public class Radiographer extends Thread {
         while (!this.isInterrupted()) {
             try {
                 hospital.doRadiographyToPacient();
-            } catch (InterruptedException e) {
-
+            } catch (InterruptedException | IOException e) {
                 this.interrupt();
             }
 

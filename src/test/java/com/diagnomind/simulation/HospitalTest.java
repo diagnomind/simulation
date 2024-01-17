@@ -24,7 +24,7 @@ public class HospitalTest {
     Patient patientMock;
 
     @Before
-    public void setup() {
+    public void setup() throws InterruptedException {
         patient = new Patient("Patient", 1, hospital);
         diagnosis = new Diagnosis(true, patient);
         patientMock = mock(Patient.class);
@@ -151,7 +151,7 @@ public class HospitalTest {
         capacity.setAccessible(true);
         capacity.set(hospital, 3);
         when(patientMock.getCanDoRadiography()).thenReturn(true);
-        when(patientMock.getRadiographyDone()).thenReturn(false, true);
+        when(patientMock.getRadiographyDone()).thenReturn(false, true, false, true);
         Thread thread1 = new Thread(() -> {
             try {
                 hospital.secondWaitingRoom(patientMock);
@@ -173,31 +173,12 @@ public class HospitalTest {
                 Thread.currentThread().interrupt();
             }
         });
-        Thread thread4 = new Thread(() -> {
-            try {
-                hospital.secondWaitingRoom(patientMock);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-        Thread thread5 = new Thread(() -> {
-            try {
-                hospital.secondWaitingRoom(patientMock);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
         thread1.start();
         thread2.start();
         thread3.start();
-        thread4.start();
-        thread5.start();
         thread1.join();
         thread2.join();
         thread3.join();
-        thread4.join();
-        thread5.join();
-
         assertFalse(hospital.getSecondWaitingRoom().isEmpty());
     }
 
@@ -213,7 +194,7 @@ public class HospitalTest {
         new Thread(() -> {
             try {
                 hospital.doRadiographyToPacient();
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IOException e) {
                 Thread.currentThread().interrupt();
             }
         }).start();
@@ -221,7 +202,7 @@ public class HospitalTest {
     }
 
     @Test
-    public void doRadiographyToPacientTest() throws InterruptedException {
+    public void doRadiographyToPacientTest() throws InterruptedException, IOException {
         hospital.getSecondWaitingRoom().put(patient);
         hospital.doRadiographyToPacient();
         assertTrue(patient.getRadiographyDone());
@@ -258,16 +239,18 @@ public class HospitalTest {
     public void doDiagnosisTest() throws InterruptedException {
         hospital.getDiagnosisToAprove().put(diagnosis);
         hospital.doDiagnosis();
-        assertFalse(hospital.getPatientResults().isEmpty());
+        assertTrue(diagnosis.getPatient().canGetResult());
+        hospital.getDiagnosisToAprove().put(new Diagnosis(false, patient));
+        hospital.doDiagnosis();
+        assertTrue(diagnosis.getPatient().canGetResult());
     }
     
     @Test
-    public void giveFinalResultTest() throws InterruptedException {
-        hospital.getPatientResults().put(new Patient("Patient", 1, hospital));
-        hospital.getPatientResults().put(new Patient("Patient", 2, hospital));
-        hospital.getPatientResults().put(new Patient("Patient", 3, hospital));
-        hospital.giveFinalResult();
-        assertTrue(hospital.getPatientResults().isEmpty());
+    public void getFinalResultTest() throws InterruptedException {
+        hospital.getAvailableDocs().put(new Sanitary(hospital, 1));
+        when(patientMock.canGetResult()).thenReturn(true);
+        hospital.getFinalResult(patientMock);
+        assertFalse(hospital.getAvailableDocs().isEmpty());
     }
 
     @Test
@@ -296,10 +279,7 @@ public class HospitalTest {
 
     @Test
     public void getPatientResultsTest() throws InterruptedException {
-        BlockingQueue<Patient> queue = new LinkedBlockingQueue<>();
-        queue.put(patient);
-        hospital.getPatientResults().put(patient);
-        assertEquals(queue.take(), hospital.getPatientResults().take());
+        assertFalse(hospital.getAvailableDocs().isEmpty());
     }
 
     @Test

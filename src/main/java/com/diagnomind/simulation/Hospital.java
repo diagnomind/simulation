@@ -17,6 +17,8 @@ import org.springframework.web.client.RestTemplate;
 
 public class Hospital {
 
+    private Boolean useModel;
+
     private static final int CAPACITY = 4;
     private static final int NUM_DOCTORS = 3;
     private static final int NUM_PATIENTS = 10;
@@ -38,7 +40,6 @@ public class Hospital {
     private int numPatientsRadiography;
     private int numRadiographys;
     private int totalTime;
-    private int availableDoctors;
 
     private Lock mutex;
     private Condition docWait;
@@ -48,12 +49,14 @@ public class Hospital {
     private Condition specialistWait;
     private Condition firstWaitingRoomFull;
     private Condition secondWaitingRoomFull;
+    private BlockingQueue<Sanitary> availableDocs;
     private BlockingQueue<Patient> firstWaitingRoom;
     private BlockingQueue<Patient> secondWaitingRoom;
     private BlockingQueue<Diagnosis> diagnosisToAprove;
-    private BlockingQueue<Patient> patientResults;
-
+    
     public Hospital() {
+        this.useModel = false;
+
         this.patients = new Patient[NUM_PATIENTS];
         this.doctors = new Sanitary[NUM_DOCTORS];
         this.specialists = new Specialist[NUM_SPECIALISTS];
@@ -63,7 +66,6 @@ public class Hospital {
         this.numRadiographys = 0;
         this.numPatientsEntered = 0;
         this.numPatientsRadiography = 0;
-        this.availableDoctors = 0;
 
         this.mutex = new ReentrantLock();
         this.docWait = mutex.newCondition();
@@ -77,7 +79,7 @@ public class Hospital {
         this.firstWaitingRoom = new LinkedBlockingQueue<>();
         this.secondWaitingRoom = new LinkedBlockingQueue<>();
         this.diagnosisToAprove = new LinkedBlockingQueue<>();
-        this.patientResults = new LinkedBlockingQueue<>();
+        this.availableDocs = new LinkedBlockingQueue<>();
     }
 
     /* Patient */
@@ -117,18 +119,18 @@ public class Hospital {
     public void attendPacient() throws InterruptedException {
         mutex.lock();
         try {
-            if (availableDoctors < NUM_DOCTORS / 2) {
-                availableDoctors++;
+            if (!availableDocs.isEmpty() && !firstWaitingRoom.isEmpty()) {
+                Sanitary doc = availableDocs.take();
                 while (firstWaitingRoom.isEmpty()) {
                     docWait.await();
                 }
                 Patient toEvaluate = firstWaitingRoom.take();
-                System.out.println(SPACE_1 + "[" + Thread.currentThread().getName() + "]: Evaluating " + toEvaluate.getName());
+                System.out.println(SPACE_1 + "[" + doc.getName() + "]: Evaluating " + toEvaluate.getName());
                 Thread.sleep(1000);
-                System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Evaluation done");
+                System.out.println(SPACE_1 + "[" + doc.getName() + "]: Evaluation done");
+                availableDocs.put(doc);
                 toEvaluate.itsAttended();
                 patientWait.signal();
-                availableDoctors--;
             }
         } finally {
             mutex.unlock();
@@ -164,20 +166,23 @@ public class Hospital {
 
     /* Radiographer */
     @SuppressWarnings("java:S106")
-    public void doRadiographyToPacient() throws InterruptedException {
+    public void doRadiographyToPacient() throws InterruptedException, IOException {
         mutex.lock();
         try {
             while (secondWaitingRoom.isEmpty()) {
                 radWait.await();
             }
             Patient toEvaluate = secondWaitingRoom.take();
-            System.out.println(SPACE_1 + "[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
+            System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
             Thread.sleep(1000);
             System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Radiography done");
             toEvaluate.radiographyDone();
             numRadiographys++;
-            sendImageToSpecialist(toEvaluate);
-            patientWaitRadiography.signal();
+            if (Boolean.TRUE.equals(useModel)) {
+                sendImageToModel(toEvaluate);
+            } else {
+                sendImageToSpecialist(toEvaluate);
+            }
         } finally {
             mutex.unlock();
         }
@@ -186,7 +191,6 @@ public class Hospital {
     /* Radiographer */
     @SuppressWarnings("java:S106")
     public void sendImageToModel(Patient diagnosisPatient) throws InterruptedException, IOException {
-        /* Conseguir el diagnosis del modelo y depositarlo */
         mutex.lock();
         try {
             if (numRadiographys != 0) {
@@ -199,13 +203,10 @@ public class Hospital {
                 int status = response.getStatusCode().value();
 
                 if (status == 200) {
-                    /*
-                     * Aqui cambiar si el diagnostico es true o false en base al accuracy del modelo
-                     */
                     Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
                     diagnosisToAprove.put(resultado);
                 } else {
-                    System.out.println(SPACE_3 + "Error connecting to the server\nCode: " + status);
+                    System.out.println(SPACE_2 + "Error connecting to the server\nCode: " + status);
                 }
                 numRadiographys--;
                 specialistWait.signal();
@@ -223,13 +224,9 @@ public class Hospital {
             if (numRadiographys != 0) {
                 /* Tiempo en el que el radiografo interpreta la imagen */
                 Thread.sleep(2000);
-                /*
-                 * Aqui podemos hacer probabilidad de fallo humano, que el 0.05 por ciento de
-                 * las veces sea erroneo por ejemplo
-                 */
-                Diagnosis resultado = new Diagnosis(true, diagnosisPatient);
+                Diagnosis resultado = new Diagnosis(false, diagnosisPatient);
                 diagnosisToAprove.put(resultado);
-                System.out.println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: Image sent");
+                System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Image sent");
                 numRadiographys--;
                 specialistWait.signal();
             }
@@ -252,42 +249,43 @@ public class Hospital {
             
             millis = (diagnosis.getMadeByModel()) ? 1000 : 3000;
             Thread.sleep(millis);
-            System.out.println(SPACE_4 + "[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
+            System.out.println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
                     + diagnosedPatient.getName());
-            diagnosedPatient.setTiempoFin(System.currentTimeMillis());
-            totalTime += diagnosedPatient.calcularTiempoEjecucion();
-            System.out.println(SPACE_4 + "[" + diagnosedPatient.getName() + "] Total time: " + totalTime);
-            patientResults.put(diagnosedPatient);
+            diagnosedPatient.diagnosisFinished();
+            patientWaitRadiography.signal();
         } finally {
             mutex.unlock();
         }
     }
 
-    /* Doc */
+    /* Patient */
     @SuppressWarnings("java:S106")
-    public void giveFinalResult() throws InterruptedException {
+    public void getFinalResult(Patient patient) throws InterruptedException {
         mutex.lock();
         try {
-            /* This works but has preferency, over doing a consult */
-            while (!patientResults.isEmpty()) {
-                Patient patient = patientResults.take();
-                System.out.println(SPACE_5 + "[" + Thread.currentThread().getName() + "]: " + patient.getName()
+            if (patient.canGetResult() && !availableDocs.isEmpty()) {
+                Sanitary doc = availableDocs.take();
+                System.out.println(SPACE_4 + "[" + doc.getName() + "]: " + patient.getName()
                         + " has received the result");
                 Thread.sleep(1000);
-                System.out.println(SPACE_5 +"[" + Thread.currentThread().getName() + "]: " + patient.getName()
-                        + " leaves the hospital");
+                patient.setTiempoFin(System.currentTimeMillis());
+                totalTime += patient.calcularTiempoEjecucion();
+                System.out.println(SPACE_5 + "[" + patient.getName() + "] Total time: " + totalTime);
+                System.out.println(SPACE_5 +"[" + patient.getName() + "]: " + "leaves the hospital");
+                availableDocs.put(doc);
             }
         } finally {
             mutex.unlock();
         }
     }
 
-    public void createThreads() {
+    public void createThreads() throws InterruptedException {
         for (int i = 0; i < NUM_PATIENTS; i++) {
             patients[i] = new Patient("Patient", i + 1, this);
         }
         for (int i = 0; i < NUM_DOCTORS; i++) {
             doctors[i] = new Sanitary(this, i + 1);
+            availableDocs.put(doctors[i]);
         }
         for (int i = 0; i < NUM_SPECIALISTS; i++) {
             specialists[i] = new Specialist(this, i + 1);
@@ -346,8 +344,8 @@ public class Hospital {
         return this.diagnosisToAprove;
     }
 
-    public BlockingQueue<Patient> getPatientResults() {
-        return this.patientResults;
+    public BlockingQueue<Sanitary> getAvailableDocs() {
+        return this.availableDocs;
     }
 
 
