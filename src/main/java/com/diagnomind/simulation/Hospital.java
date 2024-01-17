@@ -17,7 +17,7 @@ import org.springframework.web.client.RestTemplate;
 
 public class Hospital {
 
-    private Boolean useModel;
+    private Boolean useModel = false;
 
     private static final int CAPACITY = 4;
     private static final int NUM_DOCTORS = 3;
@@ -55,7 +55,6 @@ public class Hospital {
     private BlockingQueue<Diagnosis> diagnosisToAprove;
     
     public Hospital() {
-        this.useModel = false;
 
         this.patients = new Patient[NUM_PATIENTS];
         this.doctors = new Sanitary[NUM_DOCTORS];

@@ -1,6 +1,7 @@
 package com.diagnomind.simulation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import org.junit.Before;
@@ -20,6 +21,11 @@ public class DiagnosisTest {
     @Test
     public void getPatientTest() {
         assertEquals(patientMock, diagnosisTest.getPatient());
+    }
+
+    @Test
+    public void gatMadeByModelTest() {
+        assertTrue(diagnosisTest.getMadeByModel());
     }
 
 }
