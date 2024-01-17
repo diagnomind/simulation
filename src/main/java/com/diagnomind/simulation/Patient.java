@@ -49,8 +49,8 @@ public class Patient extends Thread {
         return this.radiographyDone;
     }
 
-    public long calcularTiempoEjecucion(){
-        return (this.tiempoFin-this.tiempoInit);
+    public long calcularTiempoEjecucion() {
+        return (this.tiempoFin - this.tiempoInit);
     }
 
     public void sendToRadiography() {
@@ -72,7 +72,7 @@ public class Patient extends Thread {
             hospital.firstWaitingRoom(this);
             hospital.secondWaitingRoom(this);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            interrupt();
         }
     }
 

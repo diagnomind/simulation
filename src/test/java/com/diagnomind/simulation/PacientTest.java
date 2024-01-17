@@ -3,7 +3,6 @@ package com.diagnomind.simulation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.timeout;
 
 import org.junit.After;
 import org.junit.Before;
@@ -21,6 +20,7 @@ public class PacientTest {
         hospitalMock = Mockito.mock(Hospital.class);
         int id = 0;
         pacientTest = new Patient(name, id, hospitalMock);
+
     }
 
     @After
@@ -51,10 +51,8 @@ public class PacientTest {
 
     @Test
     public void CanDoRadiographyTest() {
-
         pacientTest.sendToRadiography();
         assertTrue(pacientTest.getCanDoRadiography());
-
     }
 
     @Test
@@ -70,43 +68,9 @@ public class PacientTest {
     }
 
     @Test
-    public void interruptTest() {
-
-        pacientTest.start();
-        // timeout(3000);
-
-        try {
-            Thread.sleep(3000);
-            doThrow(new InterruptedException()).when(hospitalMock).firstWaitingRoom(pacientTest);
-            hospitalMock.firstWaitingRoom(pacientTest);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        pacientTest.interrupt();
-        assertTrue(pacientTest.isInterrupted());
-    }
-
-    @Test
-    public void runTest() {
-        // Iniciar el hilo
-        pacientTest.start();
-
-        try {
-            // Esperar un tiempo corto para darle al hilo la oportunidad de ejecutar algunas
-            // iteraciones
-            Thread.sleep(5000);
-            // Interrumpir el hilo
-            pacientTest.interrupt();
-
-            // Esperar a que el hilo termine
-            pacientTest.join();
-
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        pacientTest.interrupt();
+    public void interrupt() throws InterruptedException {
+        doThrow(new InterruptedException()).when(hospitalMock).firstWaitingRoom(pacientTest);
+        pacientTest.run();
         assertTrue(pacientTest.isInterrupted());
     }
 }

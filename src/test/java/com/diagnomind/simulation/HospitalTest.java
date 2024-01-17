@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,7 +84,8 @@ public class HospitalTest {
     public void firstWaitingRoomTestSecondWait() {
         new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                // Awaitility.await().atLeast(1000,TimeUnit.MILLISECONDS);
+                //Thread.sleep(1000);
                 hospital.firstWaitingRoom(patient);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -90,7 +93,8 @@ public class HospitalTest {
         }).start();
         new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                //Awaitility.await().atLeast(1000,TimeUnit.MILLISECONDS);
+                //Thread.sleep(1000);
                 hospital.attendPacient();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
