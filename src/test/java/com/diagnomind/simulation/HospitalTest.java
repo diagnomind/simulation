@@ -84,7 +84,7 @@ public class HospitalTest {
     public void firstWaitingRoomTestSecondWait() {
         new Thread(() -> {
             try {
-                Awaitility.await().atLeast(1000,TimeUnit.MILLISECONDS);
+                // Awaitility.await().atLeast(1000,TimeUnit.MILLISECONDS);
                 //Thread.sleep(1000);
                 hospital.firstWaitingRoom(patient);
             } catch (InterruptedException e) {
@@ -93,7 +93,7 @@ public class HospitalTest {
         }).start();
         new Thread(() -> {
             try {
-                Awaitility.await().atLeast(1000,TimeUnit.MILLISECONDS);
+                //Awaitility.await().atLeast(1000,TimeUnit.MILLISECONDS);
                 //Thread.sleep(1000);
                 hospital.attendPacient();
             } catch (InterruptedException e) {
