@@ -7,9 +7,9 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         hospital = new Hospital();
 
-        hospital.createThreads();
-        hospital.startThreads();    
-        hospital.waitEndOfThreads();
+        hospital.createThreads2();
+        hospital.startThreads2();
+        hospital.waitEndOfThreads2();
 
         System.out.println("\nSimulations total time: " + hospital.getTotalTime());
     }

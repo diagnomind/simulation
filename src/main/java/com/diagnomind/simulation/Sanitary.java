@@ -16,7 +16,7 @@ public class Sanitary extends Thread {
         while (!this.isInterrupted()) {
             try {
                 hospital.attendPacient();
-                hospital.giveFinalResult();
+                //hospital.giveFinalResult();
             } catch (InterruptedException e) {
                 this.interrupt();
             }

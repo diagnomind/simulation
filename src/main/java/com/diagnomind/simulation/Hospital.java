@@ -3,8 +3,11 @@ package com.diagnomind.simulation;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -38,7 +41,7 @@ public class Hospital {
     private int numPatientsRadiography;
     private int numRadiographys;
     private int totalTime;
-    private int availableDoctors;
+    private int notAvailableDoctors;
 
     private Lock mutex;
     private Condition docWait;
@@ -53,7 +56,11 @@ public class Hospital {
     private BlockingQueue<Diagnosis> diagnosisToAprove;
     private BlockingQueue<Patient> patientResults;
 
+    private Queue<Patient> queue;
+
     public Hospital() {
+        queue = new Queue<>(CAPACITY);
+
         this.patients = new Patient[NUM_PATIENTS];
         this.doctors = new Sanitary[NUM_DOCTORS];
         this.specialists = new Specialist[NUM_SPECIALISTS];
@@ -63,7 +70,7 @@ public class Hospital {
         this.numRadiographys = 0;
         this.numPatientsEntered = 0;
         this.numPatientsRadiography = 0;
-        this.availableDoctors = 0;
+        this.notAvailableDoctors = 0;
 
         this.mutex = new ReentrantLock();
         this.docWait = mutex.newCondition();
@@ -74,8 +81,9 @@ public class Hospital {
         this.secondWaitingRoomFull = mutex.newCondition();
         this.patientWaitRadiography = mutex.newCondition();
 
-        this.firstWaitingRoom = new LinkedBlockingQueue<>();
-        this.secondWaitingRoom = new LinkedBlockingQueue<>();
+        this.firstWaitingRoom = new LinkedBlockingQueue<>(4);
+        // this.firstWaitingRoom = new SynchronousQueue<>(true);
+        this.secondWaitingRoom = new LinkedBlockingQueue<>(4);
         this.diagnosisToAprove = new LinkedBlockingQueue<>();
         this.patientResults = new LinkedBlockingQueue<>();
     }
@@ -83,104 +91,48 @@ public class Hospital {
     /* Patient */
     @SuppressWarnings("java:S106")
     public void firstWaitingRoom(Patient patient) throws InterruptedException {
-        mutex.lock();
-        try {
-            if (!patient.getItsAttended()) {
-                System.out.println("[" + patient.getName() + "] enters the hospital");
-                while (numPatientsEntered == CAPACITY) {
-                    System.out.println("[Waitingroom 1]: Full");
-                    firstWaitingRoomFull.await();
-                }
-                patient.setTiempoInit(System.currentTimeMillis());
-                numPatientsEntered++;
-                firstWaitingRoom.put(patient);
-                System.out.println("[Waitingroom 1]: " + patient.getName() + " enters");
-
-                while (!patient.getItsAttended()) {
-                    docWait.signal();
-                    patientWait.await();
-                }
-
-                System.out.println("[Waitingroom 1]: " + patient.getName() + " gets out");
-                numPatientsEntered--;
-                firstWaitingRoomFull.signal();
-                patientWait.signal();
-                patient.sendToRadiography();
-            }
-        } finally {
-            mutex.unlock();
-        }
+        System.out.println("[" + patient.getName() + "] enters the hospital");
+        System.out.println("[Waitingroom 1]: " + patient.getName() + " enters");
+        Thread.sleep(1000);
+        // firstWaitingRoom.put(patient);
+        queue.enqueue(patient);
+        // System.out.println("[" + patient.getName() + "]: Finished Waiting");
     }
 
     /* Doc */
     @SuppressWarnings("java:S106")
     public void attendPacient() throws InterruptedException {
-        mutex.lock();
-        try {
-            if (availableDoctors < NUM_DOCTORS / 2) {
-                availableDoctors++;
-                while (firstWaitingRoom.isEmpty()) {
-                    docWait.await();
-                }
-                Patient toEvaluate = firstWaitingRoom.take();
-                System.out.println(SPACE_1 + "[" + Thread.currentThread().getName() + "]: Evaluating " + toEvaluate.getName());
-                Thread.sleep(1000);
-                System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Evaluation done");
-                toEvaluate.itsAttended();
-                patientWait.signal();
-                availableDoctors--;
-            }
-        } finally {
-            mutex.unlock();
-        }
+        // Patient toEvaluate = firstWaitingRoom.take();
+        Patient toEvaluate = queue.dequeue();
+        Thread.sleep(1000);
+        System.out.println(SPACE_1 + "[" + Thread.currentThread().getName() + "]: Evaluating " + toEvaluate.getName());
+        Thread.sleep(1000);
+        System.out.println(SPACE_1 + "[" + Thread.currentThread().getName() + "]: Evaluation done");
+        // secondWaitingRoom(toEvaluate);
+        
+        //secondWaitingRoom.put(toEvaluate);
     }
 
     /* Patient */
     @SuppressWarnings("java:S106")
-    public void secondWaitingRoom(Patient patient) throws InterruptedException {
-        mutex.lock();
-        try {
-            if (patient.getCanDoRadiography() && !patient.getRadiographyDone()) {
-                while (numPatientsRadiography == CAPACITY) {
-                    System.out.println("[Waitingroom 2]: Full");
-                    secondWaitingRoomFull.await();
-                }
-                numPatientsRadiography++;
-                secondWaitingRoom.put(patient);
-                System.out.println("[Waitingroom 2]: " + patient.getName() + " enters");
-                while (!patient.getRadiographyDone()) {
-                    radWait.signal();
-                    patientWaitRadiography.await();
-                }
-                System.out.println("[Waitingroom 2]: " + patient.getName() + " gets out");
-                numPatientsRadiography--;
-                secondWaitingRoomFull.signal();
-                patientWaitRadiography.signal();
-            }
-        } finally {
-            mutex.unlock();
+    public synchronized void secondWaitingRoom(Patient patient) throws InterruptedException {
+        if (patient.getCanDoRadiography() && !patient.getRadiographyDone()) {
+            System.out.println("[Waitingroom 1]: " + patient.getName() + " gets out");
+            System.out.println("[Waitingroom 2]: " + patient.getName() + " enters");
+            secondWaitingRoom.put(patient);
+            // System.out.println("[Waitingroom 2]: " + patient.getName() + " gets out");
         }
     }
 
     /* Radiographer */
     @SuppressWarnings("java:S106")
-    public void doRadiographyToPacient() throws InterruptedException {
-        mutex.lock();
-        try {
-            while (secondWaitingRoom.isEmpty()) {
-                radWait.await();
-            }
-            Patient toEvaluate = secondWaitingRoom.take();
-            System.out.println(SPACE_1 + "[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
-            Thread.sleep(1000);
-            System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Radiography done");
-            toEvaluate.radiographyDone();
-            numRadiographys++;
-            sendImageToSpecialist(toEvaluate);
-            patientWaitRadiography.signal();
-        } finally {
-            mutex.unlock();
-        }
+    public synchronized void doRadiographyToPacient() throws InterruptedException {
+        Patient toEvaluate = secondWaitingRoom.take();
+        System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
+        Thread.sleep(1000);
+        System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Radiography done");
+        toEvaluate.radiographyDone();
+        //  sendImageToSpecialist(toEvaluate);
     }
 
     /* Radiographer */
@@ -294,6 +246,42 @@ public class Hospital {
         }
         for (int i = 0; i < NUM_RADIOGRAPHERS; i++) {
             radiographers[i] = new Radiographer(this, i + 1);
+        }
+    }
+
+    public void createThreads2() {
+        for (int i = 0; i < NUM_PATIENTS; i++) {
+            patients[i] = new Patient("Patient", i + 1, this);
+        }
+        for (int i = 0; i < NUM_DOCTORS; i++) {
+            doctors[i] = new Sanitary(this, i + 1);
+        }
+        for (int i = 0; i < NUM_RADIOGRAPHERS; i++) {
+            radiographers[i] = new Radiographer(this, i + 1);
+        }
+    }
+    public void startThreads2() {
+        for (Patient thread : patients) {
+            thread.start();
+        }
+        for (Sanitary thread : doctors) {
+            thread.start();
+        }
+        for (Radiographer thread : radiographers) {
+            thread.start();
+        }
+    }
+    public void waitEndOfThreads2() throws InterruptedException {
+        for (Patient thread : patients) {
+            thread.join();
+        }
+        for (Sanitary thread : doctors) {
+            thread.interrupt();
+            thread.join();
+        }
+        for (Radiographer thread : radiographers) {
+            thread.interrupt();
+            thread.join();
         }
     }
 

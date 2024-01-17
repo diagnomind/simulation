@@ -70,8 +70,9 @@ public class Patient extends Thread {
     public void run() {
         try {
             hospital.firstWaitingRoom(this);
-            hospital.secondWaitingRoom(this);
+            // hospital.secondWaitingRoom(this);
         } catch (InterruptedException e) {
+            //this.interrupt();
             e.printStackTrace();
         }
     }
