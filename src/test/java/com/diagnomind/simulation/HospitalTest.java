@@ -11,8 +11,6 @@ import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-develop
-
 import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
