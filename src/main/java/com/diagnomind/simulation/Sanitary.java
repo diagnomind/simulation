@@ -3,12 +3,10 @@ package com.diagnomind.simulation;
 public class Sanitary extends Thread {
 
     Hospital hospital;
-    int id;
 
-    public Sanitary(Hospital hospital, int id){
-        super("Doctor " + id);
+    public Sanitary(Hospital hospital){
+        super("Doctor");
         this.hospital=hospital;
-        this.id = id;
     }
 
     @Override
