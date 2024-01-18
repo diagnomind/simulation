@@ -1,40 +1,34 @@
-// package com.diagnomind.simulation;
+package com.diagnomind.simulation;
 
-// import static org.junit.Assert.assertEquals;
-// import static org.junit.Assert.assertFalse;
-// import static org.junit.Assert.assertTrue;
-// import static org.mockito.Mockito.mock;
-// import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-// import java.io.IOException;
-// import java.lang.reflect.Field;
-// import java.util.concurrent.BlockingQueue;
-// import java.util.concurrent.LinkedBlockingQueue;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-// import org.junit.Before;
-// import org.junit.Test;
+import org.junit.Before;
+import org.junit.Test;
 
-// public class HospitalTest {
+public class HospitalTest {
     
-//     Hospital hospital;
-//     Patient patient;
-//     Diagnosis diagnosis;
-//     Patient patientMock;
+    Hospital hospital;
+    Patient patient;
+    Diagnosis diagnosis;
+    Patient patientMock;
 
-//     @Before
-//     public void setup() {
-//         patient = new Patient("Patient", 1, hospital);
-//         diagnosis = new Diagnosis(true, patient);
-//         patientMock = mock(Patient.class);
-//         hospital = new Hospital();
-//         hospital.createThreads();
-//     }
-    
-//     @Test
-//     public void startAndEndThreadsTest() throws InterruptedException {
-//         hospital.startThreads();
-//         hospital.waitEndOfThreads();
-//     }
+    @Before
+    public void setup() {
+        patient = new Patient(1, hospital);
+        diagnosis = new Diagnosis(true, patient);
+        patientMock = mock(Patient.class);
+        hospital = new Hospital();
+        hospital.createThreads();
+    }
 
 //     @Test
 //     public void firstWaitingRoomTest() throws InterruptedException {
@@ -256,51 +250,42 @@
 //         hospital.doDiagnosis();
 //         assertFalse(hospital.getPatientResults().isEmpty());
 //     }
-    
-//     @Test
-//     public void giveFinalResultTest() throws InterruptedException {
-//         hospital.getPatientResults().put(new Patient("Patient", 1, hospital));
-//         hospital.getPatientResults().put(new Patient("Patient", 2, hospital));
-//         hospital.getPatientResults().put(new Patient("Patient", 3, hospital));
-//         hospital.giveFinalResult();
-//         assertTrue(hospital.getPatientResults().isEmpty());
-//     }
 
-//     @Test
-//     public void getFirstWaitingRoomTest() throws InterruptedException {
-//         BlockingQueue<Patient> queue = new LinkedBlockingQueue<>();
-//         queue.put(patient);
-//         hospital.getFirstWaitingRoom().put(patient);
-//         assertEquals(queue.take(), hospital.getFirstWaitingRoom().take());
-//     }
+    @Test
+    public void getFirstWaitingRoomTest() throws InterruptedException {
+        BlockingQueue<Patient> queue = new LinkedBlockingQueue<>();
+        queue.put(patient);
+        hospital.getFirstWaitingRoom().put(patient);
+        assertEquals(queue.take(), hospital.getFirstWaitingRoom().take());
+    }
 
-//     @Test
-//     public void getSecondWaitingRoomTest() throws InterruptedException {
-//         BlockingQueue<Patient> queue = new LinkedBlockingQueue<>();
-//         queue.put(patient);
-//         hospital.getSecondWaitingRoom().put(patient);
-//         assertEquals(queue.take(), hospital.getSecondWaitingRoom().take());
-//     }
+    @Test
+    public void getSecondWaitingRoomTest() throws InterruptedException {
+        BlockingQueue<Patient> queue = new LinkedBlockingQueue<>();
+        queue.put(patient);
+        hospital.getSecondWaitingRoom().put(patient);
+        assertEquals(queue.take(), hospital.getSecondWaitingRoom().take());
+    }
 
-//     @Test
-//     public void getDiagnosisToAproveTest() throws InterruptedException {
-//         BlockingQueue<Diagnosis> queue = new LinkedBlockingQueue<>();
-//         queue.put(diagnosis);
-//         hospital.getDiagnosisToAprove().put(diagnosis);
-//         assertEquals(queue.take(), hospital.getDiagnosisToAprove().take());
-//     }
+    @Test
+    public void getDiagnosisToAproveTest() throws InterruptedException {
+        BlockingQueue<Diagnosis> queue = new LinkedBlockingQueue<>();
+        queue.put(diagnosis);
+        hospital.getDiagnosisToAprove().put(diagnosis);
+        assertEquals(queue.take(), hospital.getDiagnosisToAprove().take());
+    }
 
-//     @Test
-//     public void getPatientResultsTest() throws InterruptedException {
-//         BlockingQueue<Patient> queue = new LinkedBlockingQueue<>();
-//         queue.put(patient);
-//         hospital.getPatientResults().put(patient);
-//         assertEquals(queue.take(), hospital.getPatientResults().take());
-//     }
+    @Test
+    public void getPatientResultsTest() throws InterruptedException {
+        BlockingQueue<Patient> queue = new LinkedBlockingQueue<>();
+        queue.put(patient);
+        hospital.getPatientResults().put(patient);
+        assertEquals(queue.take(), hospital.getPatientResults().take());
+    }
 
-//     @Test
-//     public void getTotalTimeTest() {
-//         assertEquals(0, hospital.getTotalTime());
-//     }
+    @Test
+    public void getTotalTimeTest() {
+        assertEquals(0, hospital.getTotalTime());
+    }
 
-// }
+}
