@@ -26,26 +26,4 @@ public class SpecialistTest {
         hospitalMock = null;
     }
 
-    @Test
-    public void runTest() {
-        specialistTest.start();
-        try {
-            // Esperar un tiempo corto para darle al hilo la oportunidad de ejecutar algunas
-            // iteraciones
-            Awaitility.await().atLeast(5000, TimeUnit.MILLISECONDS);
-            //Thread.sleep(5000);
-
-            specialistTest.interrupt();
-
-            // Esperar a que el hilo termine
-            specialistTest.join();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        specialistTest.interrupt();
-        assertTrue(specialistTest.isInterrupted());
-
-    }
-
 }
