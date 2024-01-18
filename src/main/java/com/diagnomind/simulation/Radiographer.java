@@ -1,5 +1,7 @@
 package com.diagnomind.simulation;
 
+import java.io.IOException;
+
 public class Radiographer extends Thread {
 
     Hospital hospital;
@@ -23,7 +25,11 @@ public class Radiographer extends Thread {
     @SuppressWarnings("java:S106")
     public void run() {
         while (!this.isInterrupted()) {
-            hospital.doRadiographyToPacient();
+            try {
+                hospital.doRadiographyToPacient();
+            } catch (InterruptedException | IOException e) {
+                this.interrupt();
+            }
         }
     }
 }

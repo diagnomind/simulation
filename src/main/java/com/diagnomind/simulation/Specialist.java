@@ -14,7 +14,11 @@ public class Specialist extends Thread {
     @Override
     public void run() {
         while (!this.isInterrupted()) {
-            hospital.doDiagnosis();
+            try {
+                hospital.doDiagnosis();
+            } catch (InterruptedException e) {
+                this.interrupt();
+            }
         }
     }
 }
