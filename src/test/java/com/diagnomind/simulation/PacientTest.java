@@ -20,7 +20,7 @@ public class PacientTest {
         String name = "Pacient test";
         hospitalMock = Mockito.mock(Hospital.class);
         int id = 0;
-        pacientTest = new Patient(name, id, hospitalMock);
+        pacientTest = new Patient(id, hospitalMock);
     }
 
     @After

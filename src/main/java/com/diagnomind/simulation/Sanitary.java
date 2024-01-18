@@ -14,12 +14,7 @@ public class Sanitary extends Thread {
     @Override
     public void run() {
         while (!this.isInterrupted()) {
-            try {
-                hospital.attendPacient();
-                //hospital.giveFinalResult();
-            } catch (InterruptedException e) {
-                this.interrupt();
-            }
+            hospital.attendPacient();
         }
     }
     

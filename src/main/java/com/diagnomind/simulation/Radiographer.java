@@ -23,13 +23,7 @@ public class Radiographer extends Thread {
     @SuppressWarnings("java:S106")
     public void run() {
         while (!this.isInterrupted()) {
-            try {
-                hospital.doRadiographyToPacient();
-            } catch (InterruptedException e) {
-
-                this.interrupt();
-            }
-
+            hospital.doRadiographyToPacient();
         }
     }
 }

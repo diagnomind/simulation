@@ -3,22 +3,22 @@ package com.diagnomind.simulation;
 public class Patient extends Thread {
 
     int diagnosisId;
-    String name;
     Hospital hospital;
     long tiempoInit;
     long tiempoFin;
     boolean itsAttended;
     boolean radiographyDone;
     boolean canDoRadiography;
+    boolean finished;
 
-    public Patient(String name, int id, Hospital hospital) {
+    public Patient(int id, Hospital hospital) {
         super("Patient " + id);
-        this.name = name;
         this.hospital = hospital;
         this.diagnosisId = id;
         this.canDoRadiography = false;
         this.radiographyDone = false;
         this.itsAttended = false;
+        this.finished = false;
     }
 
     public long getTiempoInit() {
@@ -65,16 +65,20 @@ public class Patient extends Thread {
         this.radiographyDone = true;
     }
 
+    public void itsFinished() {
+        this.finished = true;
+    }
+
+    public boolean finished() {
+        return this.finished;
+    }
+
     @Override
     @SuppressWarnings("java:S106")
     public void run() {
-        try {
-            hospital.firstWaitingRoom(this);
-            // hospital.secondWaitingRoom(this);
-        } catch (InterruptedException e) {
-            //this.interrupt();
-            e.printStackTrace();
-        }
+        hospital.firstWaitingRoom(this);
+        hospital.secondWaitingRoom(this);
+        hospital.getFinalResult(this);
     }
 
 }
