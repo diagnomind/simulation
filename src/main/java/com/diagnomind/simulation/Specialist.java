@@ -1,12 +1,12 @@
 package com.diagnomind.simulation;
 
-public class Sanitary extends Thread {
+public class Specialist extends Thread {
 
     Hospital hospital;
     int id;
 
-    public Sanitary(Hospital hospital, int id){
-        super("Doctor " + id);
+    public Specialist(Hospital hospital, int id){
+        super("Specialist " + id);
         this.hospital=hospital;
         this.id = id;
     }
@@ -15,11 +15,12 @@ public class Sanitary extends Thread {
     public void run() {
         while (!this.isInterrupted()) {
             try {
-                hospital.attendPacient();
+                hospital.doDiagnosis();
+                // hospital.doDiagnosisWithModel();
             } catch (InterruptedException e) {
                 this.interrupt();
             }
         }
     }
-    
+
 }
