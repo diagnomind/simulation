@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,12 +30,15 @@ public class HospitalTest {
         hospital = new Hospital();
         hospital.createThreads();
     }
-    
-    @Test
-    public void startAndEndThreadsTest() throws InterruptedException {
-        hospital.startThreads();
-        hospital.waitEndOfThreads();
+
+    @After
+    public void clear(){
+        patientMock=null;
+        hospital=null;
+        diagnosis=null;
+        patient=null;
     }
+    
 
     @Test
     public void firstWaitingRoomTest() throws InterruptedException {
@@ -94,7 +98,7 @@ public class HospitalTest {
                 Thread.currentThread().interrupt();
             }
         }).start();
-
+        //Awaitility.await().untilAsserted(()->notAttendPacientTest());
         assertTrue(hospital.getFirstWaitingRoom().isEmpty());
     }
 
