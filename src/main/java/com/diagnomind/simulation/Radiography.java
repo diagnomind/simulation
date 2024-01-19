@@ -8,4 +8,8 @@ public class Radiography {
         this.patient = patient;
     }
 
+    public Patient getPatient() {
+        return this.patient;
+    }
+    
 }
