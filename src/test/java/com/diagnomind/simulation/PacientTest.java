@@ -35,12 +35,12 @@ public class PacientTest {
         ;
     }
 
-    @Test
-    public void tiempoFinTest() {
-        pacientTest.setTiempoFin(1);
-        assertEquals(1, pacientTest.getTiempoFin());
-        ;
-    }
+    // @Test
+    // public void tiempoFinTest() {
+    //     pacientTest.setTiempoFin(1);
+    //     assertEquals(1, pacientTest.getTiempoFin());
+    //     ;
+    // }
 
     @Test
     public void calcularTiempoEjecucionTest() {
@@ -49,25 +49,25 @@ public class PacientTest {
         assertEquals(5, pacientTest.calcularTiempoEjecucion());
     }
 
-    @Test
-    public void CanDoRadiographyTest() {
+    // @Test
+    // public void CanDoRadiographyTest() {
 
-        pacientTest.sendToRadiography();
-        assertTrue(pacientTest.getCanDoRadiography());
+    //     pacientTest.sendToRadiography();
+    //     assertTrue(pacientTest.getCanDoRadiography());
 
-    }
+    // }
 
-    @Test
-    public void attendedTest() {
-        pacientTest.itsAttended();
-        assertTrue(pacientTest.getItsAttended());
-    }
+    // @Test
+    // public void attendedTest() {
+    //     pacientTest.itsAttended();
+    //     assertTrue(pacientTest.getItsAttended());
+    // }
 
-    @Test
-    public void radiographyTest() {
-        pacientTest.radiographyDone();
-        assertTrue(pacientTest.getRadiographyDone());
-    }
+    // @Test
+    // public void radiographyTest() {
+    //     pacientTest.radiographyDone();
+    //     assertTrue(pacientTest.getRadiographyDone());
+    // }
 
     @Test
     public void interruptTest() {

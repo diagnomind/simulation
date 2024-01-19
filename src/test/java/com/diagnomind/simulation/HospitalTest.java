@@ -38,7 +38,7 @@ public class HospitalTest {
     public void attendPacientTest() throws InterruptedException {
         hospital.getFirstWaitingRoom().put(patient);
         hospital.attendPacient();
-        assertTrue(patient.getItsAttended());
+        assertTrue(hospital.getFirstWaitingRoom().isEmpty());
     }
 
     @Test
@@ -52,11 +52,11 @@ public class HospitalTest {
     public void doRadiographyToPacientTest() throws InterruptedException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, IOException {
         hospital.getSecondWaitingRoom().put(patient);
         hospital.doRadiographyToPacient();
-        assertTrue(patient.getRadiographyDone());
+        assertTrue(hospital.getSecondWaitingRoom().isEmpty());
         Field model = Hospital.class.getDeclaredField("useModel");
         model.setAccessible(true);
         model.set(hospital, true);
-        assertTrue(patient.getRadiographyDone());
+        assertTrue(hospital.getSecondWaitingRoom().isEmpty());
     }
 
     @Test

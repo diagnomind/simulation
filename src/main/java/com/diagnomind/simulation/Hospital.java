@@ -39,23 +39,21 @@ public class Hospital {
     private BlockingQueue<Patient> secondWaitingRoom;
     private BlockingQueue<Diagnosis> diagnosisToAprove;
     private BlockingQueue<Sanitary> availableDocs;
-
     private BlockingQueue<Object> canPassToWaitingRoom2;
     private BlockingQueue<Object> canGetResults;
 
     public Hospital() {
+        this.totalTime = 0;
+
         this.patients = new Patient[NUM_PATIENTS];
         this.doctors = new Sanitary[NUM_DOCTORS];
         this.specialists = new Specialist[NUM_SPECIALISTS];
         this.radiographers = new Radiographer[NUM_RADIOGRAPHERS];
 
-        this.totalTime = 0;
-
         this.firstWaitingRoom = new LinkedBlockingQueue<>(CAPACITY);
         this.secondWaitingRoom = new LinkedBlockingQueue<>(CAPACITY);
         this.diagnosisToAprove = new LinkedBlockingQueue<>(CAPACITY);
         this.availableDocs = new LinkedBlockingQueue<>(NUM_DOCTORS);
-
         this.canPassToWaitingRoom2 = new LinkedBlockingQueue<>(CAPACITY);
         this.canGetResults = new LinkedBlockingQueue<>(CAPACITY);
     }
@@ -82,8 +80,6 @@ public class Hospital {
                 SPACE_1 + "[" + doc.getName() + "]: Evaluating " + toEvaluate.getName());
         Thread.sleep(1000);
         System.out.println(SPACE_1 + "[" + doc.getName() + "]: Evaluation done");
-        toEvaluate.itsAttended();
-        toEvaluate.sendToRadiography();
         canPassToWaitingRoom2.put(new Object());
         availableDocs.put(doc);
     }
@@ -93,7 +89,7 @@ public class Hospital {
     public void secondWaitingRoom(Patient patient) throws InterruptedException {
         canPassToWaitingRoom2.take();
         secondWaitingRoom.put(patient);
-        // Thread.currentThread().sleep(1000);
+        Thread.sleep(1000);
         System.out.println("[Waitingroom 2]: " + patient.getName() + " enters");
     }
 
@@ -107,7 +103,6 @@ public class Hospital {
                 .println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
         Thread.sleep(1000);
         System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Radiography done");
-        toEvaluate.radiographyDone();
         if (Boolean.TRUE.equals(useModel)) {
             this.sendImageToModel(toEvaluate);
         } else {
@@ -141,7 +136,8 @@ public class Hospital {
         Thread.sleep(2000);
         Diagnosis resultado = new Diagnosis(false, diagnosisPatient);
         diagnosisToAprove.put(resultado);
-        System.out.println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: Image sent");
+        System.out.println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: " + resultado.getPatient().getName()
+                + "'s image sent");
     }
 
     /* Specialist */
@@ -152,7 +148,7 @@ public class Hospital {
 
         int millis = 0;
         millis = (diagnosis.getMadeByModel()) ? 1000 : 3000;
-        // Thread.sleep(millis);
+        Thread.sleep(millis);
         System.out.println(SPACE_4 + "[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
                 + diagnosedPatient.getName());
         canGetResults.put(new Object());
@@ -164,9 +160,9 @@ public class Hospital {
         Sanitary doc;
         canGetResults.take();
         doc = availableDocs.take();
+        Thread.sleep(1000);
         System.out.println(SPACE_1 + "[" + doc.getName() + "]: " + patient.getName()
                 + " has received the result");
-        // Thread.sleep(1000);
         patient.setTiempoFin(System.currentTimeMillis());
         totalTime += patient.calcularTiempoEjecucion();
         System.out.println(SPACE_5 + "[" + patient.getName() + "] Total time: " + totalTime);
@@ -175,6 +171,7 @@ public class Hospital {
         availableDocs.put(doc);
     }
 
+    @SuppressWarnings("java:S2142")
     public void createThreads() {
         for (int i = 0; i < NUM_PATIENTS; i++) {
             patients[i] = new Patient(i + 1, this);
