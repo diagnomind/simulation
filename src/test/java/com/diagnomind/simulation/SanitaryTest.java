@@ -24,8 +24,7 @@ public class SanitaryTest {
         hospitalMock = null;
     }
 
-
-        @Test
+    @Test
     public void interrupt() throws InterruptedException {
         doThrow(new InterruptedException()).when(hospitalMock).attendPacient();
         sanitaryTest.run();

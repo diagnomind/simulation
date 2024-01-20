@@ -1,7 +1,5 @@
 package com.diagnomind.simulation;
 
-import java.io.IOException;
-
 public class Radiographer extends Thread {
 
     Hospital hospital;

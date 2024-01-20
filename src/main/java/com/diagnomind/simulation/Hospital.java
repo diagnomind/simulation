@@ -7,13 +7,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 public class Hospital {
 
     private Boolean useModel;
-    private String requestURL = "http://127.0.0.1:8080//simulation";
+    private static final String URL = "http://127.0.0.1:8080//simulation";
 
     private static final int CAPACITY = 4;
     private static final int NUM_DOCTORS = 3;
@@ -109,11 +108,10 @@ public class Hospital {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         HttpEntity<byte[]> request = new HttpEntity<>(headers);
-        ResponseEntity<byte[]> response = restTemplate.exchange(requestURL, HttpMethod.GET, request,
-                new ParameterizedTypeReference<byte[]>() {
-                });
 
-        int status = response.getStatusCode().value();
+        int status = restTemplate.exchange(URL, HttpMethod.GET, request,
+                new ParameterizedTypeReference<byte[]>() {
+                }).getStatusCode().value();
 
         if (status == 200) {
             Radiography newRadiography = new Radiography(diagnosisPatient, true);
