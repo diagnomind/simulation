@@ -5,13 +5,20 @@ public class Main {
 
     @SuppressWarnings("java:S106")
     public static void main(String[] args) throws InterruptedException {
-        hospital = new Hospital();
-
+        hospital = new Hospital(false);
         hospital.createThreads();
         hospital.startThreads();
         hospital.waitEndOfThreads();
+        int timeWithoutModel = hospital.getTotalTime();
 
-        System.out.println("\nSimulations total time: " + hospital.getTotalTime());
+        hospital = new Hospital(false);
+        hospital.createThreads();
+        hospital.startThreads();
+        hospital.waitEndOfThreads();
+        int timeWithModel = hospital.getTotalTime();
+
+        System.out.println("\nSimulation total time without model: " + timeWithoutModel);
+        System.out.println("\nSimulation total time with model: " + timeWithModel);
     }
 
 }

@@ -1,16 +1,18 @@
 package com.diagnomind.simulation;
 
+import java.util.concurrent.Semaphore;
+
 public class Patient extends Thread {
     
+    Semaphore semaphore;
     Hospital hospital;
     long tiempoInit;
     long tiempoFin;
-    boolean finished;
 
     public Patient(int id, Hospital hospital) {
         super("Patient " + id);
         this.hospital = hospital;
-        this.finished = false;
+        this.semaphore = new Semaphore(0);
     }
 
     public long getTiempoInit() {
@@ -29,21 +31,25 @@ public class Patient extends Thread {
         return (this.tiempoFin-this.tiempoInit);
     }
 
-    public void itsFinished() {
-        this.finished = true;
+    public void patientWait() {
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            this.interrupt();
+        }
     }
 
-    public boolean finished() {
-        return this.finished;
+    public void patientKeepRunning() {
+        semaphore.release();
     }
 
     @Override
     @SuppressWarnings("java:S106")
     public void run() {
         try {
-            hospital.firstWaitingRoom(this);
-            hospital.secondWaitingRoom(this);
-            hospital.getFinalResult(this);
+            hospital.firstWaitingRoom();
+            hospital.secondWaitingRoom();
+            hospital.getFinalResult();
         } catch (InterruptedException e) {
             this.interrupt();
         }
