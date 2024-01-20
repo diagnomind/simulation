@@ -16,11 +16,9 @@ public class Specialist extends Thread {
         while (!this.isInterrupted()) {
             try {
                 hospital.doDiagnosis();
-                // hospital.doDiagnosisWithModel();
             } catch (InterruptedException e) {
                 this.interrupt();
             }
         }
     }
-
 }

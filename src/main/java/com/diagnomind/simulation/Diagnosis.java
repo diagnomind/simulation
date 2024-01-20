@@ -2,20 +2,20 @@ package com.diagnomind.simulation;
 
 public class Diagnosis {
     
-    private Boolean madeByModel;
-    private Patient patient;
+    private Radiography radiography;
+    private String message;
 
-    public Diagnosis(Boolean bool, Patient patient) {
-        this.madeByModel = bool;
-        this.patient = patient;
+    public Diagnosis(Radiography radiography, String msg) {
+        this.radiography = radiography;
+        this.message = msg;
     }
 
     public Patient getPatient() {
-        return patient;
+        return radiography.getPatient();
     }
 
-    public Boolean getMadeByModel() {
-        return this.madeByModel;
+    public String getMsg() {
+        return this.message;
     }
 
 }

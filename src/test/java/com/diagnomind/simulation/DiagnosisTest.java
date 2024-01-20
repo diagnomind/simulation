@@ -11,11 +11,13 @@ public class DiagnosisTest {
     
     Patient patientMock;
     Diagnosis diagnosisTest;
+    Radiography radiographyTest;
 
     @Before
     public void setup() {
         patientMock = mock(Patient.class);
-        diagnosisTest = new Diagnosis(true, patientMock);
+        radiographyTest = new Radiography(patientMock, false);
+        diagnosisTest = new Diagnosis(radiographyTest, "");
     }
 
     @Test
@@ -24,8 +26,8 @@ public class DiagnosisTest {
     }
 
     @Test
-    public void gatMadeByModelTest() {
-        assertTrue(diagnosisTest.getMadeByModel());
+    public void getMsgTest() {
+        assertEquals("", diagnosisTest.getMsg());
     }
 
 }

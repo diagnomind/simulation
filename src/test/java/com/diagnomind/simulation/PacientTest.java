@@ -3,6 +3,7 @@ package com.diagnomind.simulation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 import org.junit.After;
 import org.junit.Before;
@@ -16,11 +17,9 @@ public class PacientTest {
 
     @Before
     public void constructorTest() {
-        String name = "Pacient test";
         hospitalMock = Mockito.mock(Hospital.class);
         int id = 0;
-        pacientTest = new Patient(name, id, hospitalMock);
-
+        pacientTest = new Patient(id, hospitalMock);
     }
 
     @After
@@ -29,17 +28,17 @@ public class PacientTest {
     }
 
     @Test
-    public void tiempoInitTest() {
-        pacientTest.setTiempoInit(1);
-        assertEquals(1, pacientTest.getTiempoInit());
-        ;
+    public void tiempoTest() {
+        pacientTest.setTiempoInit(1000);
+        assertEquals(1000, pacientTest.getTiempoInit());
+        pacientTest.setTiempoFin(2000);
+        assertEquals(1000, pacientTest.calcularTiempoEjecucion());
     }
 
     @Test
-    public void tiempoFinTest() {
-        pacientTest.setTiempoFin(1);
-        assertEquals(1, pacientTest.getTiempoFin());
-        ;
+    public void tiempoInitTest() {
+        pacientTest.setTiempoInit(1);
+        assertEquals(1, pacientTest.getTiempoInit());
     }
 
     @Test
@@ -47,24 +46,6 @@ public class PacientTest {
         pacientTest.setTiempoInit(0);
         pacientTest.setTiempoFin(5);
         assertEquals(5, pacientTest.calcularTiempoEjecucion());
-    }
-
-    @Test
-    public void CanDoRadiographyTest() {
-        pacientTest.sendToRadiography();
-        assertTrue(pacientTest.getCanDoRadiography());
-    }
-
-    @Test
-    public void attendedTest() {
-        pacientTest.itsAttended();
-        assertTrue(pacientTest.getItsAttended());
-    }
-
-    @Test
-    public void radiographyTest() {
-        pacientTest.radiographyDone();
-        assertTrue(pacientTest.getRadiographyDone());
     }
 
     @Test
