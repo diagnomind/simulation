@@ -9,16 +9,16 @@ public class Main {
         hospital.createThreads();
         hospital.startThreads();
         hospital.waitEndOfThreads();
-        int timeWithoutModel = hospital.getTotalTime();
+        long timeWithoutModel = hospital.getTotalTime();
 
-        hospital = new Hospital(false);
+        hospital = new Hospital(true);
         hospital.createThreads();
         hospital.startThreads();
         hospital.waitEndOfThreads();
-        int timeWithModel = hospital.getTotalTime();
+        long timeWithModel = hospital.getTotalTime();
 
-        System.out.println("\nSimulation total time without model: " + timeWithoutModel);
-        System.out.println("\nSimulation total time with model: " + timeWithModel);
+        System.out.println("\nSimulation score without model: " + timeWithoutModel);
+        System.out.println("Simulation score with model: " + timeWithModel + "\n");
     }
 
 }
