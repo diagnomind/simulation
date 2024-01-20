@@ -8,21 +8,9 @@ public class Main {
     @SuppressWarnings("java:S106")
     public static void main(String[] args) throws InterruptedException {
         RestTemplate restTemplate = new RestTemplate();
-
-        hospital = new Hospital(false, restTemplate);
-        hospital.createThreads();
-        hospital.startThreads();
-        hospital.waitEndOfThreads();
-        long timeWithoutModel = hospital.getTotalTime();
-
-        hospital = new Hospital(true, restTemplate);
-        hospital.createThreads();
-        hospital.startThreads();
-        hospital.waitEndOfThreads();
-        long timeWithModel = hospital.getTotalTime();
-
-        System.out.println("\nSimulation score without model: " + timeWithoutModel);
-        System.out.println("Simulation score with model: " + timeWithModel + "\n");
+        long timeWithoutModel = (new Hospital(false, restTemplate)).createThreads().startThreads().waitEndOfThreads().getTotalTime();
+        long timeWithModel = (new Hospital(true, restTemplate)).createThreads().startThreads().waitEndOfThreads().getTotalTime();
+        System.out.println("\nSimulation score without model: " + timeWithoutModel + "\nSimulation score with model: " + timeWithModel + "\n");
     }
 
 }

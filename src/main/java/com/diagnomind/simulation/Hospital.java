@@ -13,7 +13,7 @@ public class Hospital {
 
     private Boolean useModel;
     private RestTemplate restTemplate;
-    private static final String URL = "aa";
+    private static final String URL = "http://127.0.0.1:8080//simulation";
 
     private static final int CAPACITY = 4;
     private static final int NUM_DOCTORS = 3;
@@ -165,7 +165,7 @@ public class Hospital {
     }
 
     @SuppressWarnings("java:S2142")
-    public void createThreads() {
+    public Hospital createThreads() {
         for (int i = 0; i < NUM_PATIENTS; i++) {
             patients[i] = new Patient(i + 1, this);
         }
@@ -180,12 +180,13 @@ public class Hospital {
             try {
                 availableDocs.put(doctors[i]);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         }
+        return this;
     }
 
-    public void startThreads() {
+    public Hospital startThreads() {
         for (Patient thread : patients) {
             thread.start();
         }
@@ -198,9 +199,10 @@ public class Hospital {
         for (Radiographer thread : radiographers) {
             thread.start();
         }
+        return this;
     }
 
-    public void waitEndOfThreads() throws InterruptedException {
+    public Hospital waitEndOfThreads() throws InterruptedException {
         for (Patient thread : patients) {
             thread.join();
         }
@@ -216,6 +218,7 @@ public class Hospital {
             thread.interrupt();
             thread.join();
         }
+        return this;
     }
 
     public long getTotalTime() {
