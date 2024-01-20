@@ -1,17 +1,21 @@
 package com.diagnomind.simulation;
 
+import org.springframework.web.client.RestTemplate;
+
 public class Main {
     static Hospital hospital;
 
     @SuppressWarnings("java:S106")
     public static void main(String[] args) throws InterruptedException {
-        hospital = new Hospital(false);
+        RestTemplate restTemplate = new RestTemplate();
+
+        hospital = new Hospital(false, restTemplate);
         hospital.createThreads();
         hospital.startThreads();
         hospital.waitEndOfThreads();
         long timeWithoutModel = hospital.getTotalTime();
 
-        hospital = new Hospital(true);
+        hospital = new Hospital(true, restTemplate);
         hospital.createThreads();
         hospital.startThreads();
         hospital.waitEndOfThreads();

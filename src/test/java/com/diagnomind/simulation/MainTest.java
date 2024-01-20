@@ -15,9 +15,9 @@ public class MainTest {
     }
 
     @Test
-    public void mainTest() throws InterruptedException {
-    //     Main.main(new String[] { "args" });
-    //     assertNotEquals(0, Main.hospital.getTotalTime());
+    public void mainTest() throws InterruptedException, NoSuchFieldException, SecurityException {
+        // Main.main(new String[] { "args" });
+        // assertNotEquals(0, Main.hospital.getTotalTime());
     }
 
 }

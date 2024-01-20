@@ -2,6 +2,7 @@ package com.diagnomind.simulation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,28 +12,21 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 
-import org.easymock.Mock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 public class HospitalTest {
 
     Hospital hospital;
+    RestTemplate restTemplateMock;
     Patient patient;
     Diagnosis diagnosis;
     Radiography radiographyWithModel;
@@ -40,13 +34,20 @@ public class HospitalTest {
     Patient patientMock;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setup() {
         patient = new Patient(1, hospital);
         radiographyWithModel = new Radiography(patient, true);
         radiographyWithoutModel = new Radiography(patient, false);
         diagnosis = new Diagnosis(radiographyWithModel, "Has cancer");
         patientMock = mock(Patient.class);
-        hospital = new Hospital(false);
+
+        restTemplateMock = mock(RestTemplate.class);
+        ResponseEntity<byte[]> mockResponseEntity = ResponseEntity.ok(new byte[]{});
+        when(restTemplateMock.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class),
+                any(ParameterizedTypeReference.class))).thenReturn(mockResponseEntity);
+        
+        hospital = new Hospital(false, restTemplateMock);
         hospital.createThreads();
     }
 
@@ -56,6 +57,13 @@ public class HospitalTest {
         hospital = null;
         diagnosis = null;
         patient = null;
+    }
+
+    @Test
+    public void startAndEndThreads() throws InterruptedException {
+        hospital.startThreads();
+        hospital.waitEndOfThreads();
+        assertNotEquals(0, hospital.getTotalTime());
     }
 
     @Test
@@ -91,14 +99,9 @@ public class HospitalTest {
     }
 
     @Test
-    @SuppressWarnings({ "Java(16777748)" })
     public void sendImageToModelTest() throws InterruptedException {
-        // ResponseEntity<byte[]> mockResponseEntity = ResponseEntity.ok(new byte[]{});
-        // when(restTemplateMock.exchange(anyString(), eq(HttpMethod.GET),
-        // any(HttpEntity.class),
-        // any(ParameterizedTypeReference.class))).thenReturn(mockResponseEntity);
-        // hospital.sendImageToModel(patient);
-        // assertFalse(hospital.getRadiographysToEvaluate().isEmpty());
+        hospital.sendImageToModel(patient);
+        assertFalse(hospital.getRadiographysToEvaluate().isEmpty());
     }
 
     @Test

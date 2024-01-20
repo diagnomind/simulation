@@ -1,6 +1,7 @@
 package com.diagnomind.simulation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -27,6 +28,13 @@ public class RadiographerTest {
     public void getSetHospitalTest() {
         radioTest.setHospital(hospitalMock);
         assertEquals(hospitalMock, radioTest.getHospital());
+    }
+
+    @Test
+    public void interrupt() throws InterruptedException {
+        doThrow(new InterruptedException()).when(hospitalMock).doRadiographyToPacient();
+        radioTest.run();
+        assertTrue(radioTest.isInterrupted());
     }
 
 }

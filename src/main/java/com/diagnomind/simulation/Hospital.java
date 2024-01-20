@@ -12,7 +12,8 @@ import org.springframework.web.client.RestTemplate;
 public class Hospital {
 
     private Boolean useModel;
-    private static final String URL = "http://127.0.0.1:8080//simulation";
+    private RestTemplate restTemplate;
+    private static final String URL = "aa";
 
     private static final int CAPACITY = 4;
     private static final int NUM_DOCTORS = 3;
@@ -40,8 +41,9 @@ public class Hospital {
     private BlockingQueue<Radiography> radiographysToEvaluate;
     private BlockingQueue<Diagnosis> finishedDiagnosis;
 
-    public Hospital(boolean model) {
+    public Hospital(boolean model, RestTemplate restTemplate) {
         this.useModel = model;
+        this.restTemplate = restTemplate;
         this.totalTime = 0;
 
         this.patients = new Patient[NUM_PATIENTS];
@@ -105,7 +107,6 @@ public class Hospital {
     /* Radiographer */
     @SuppressWarnings("java:S106")
     public void sendImageToModel(Patient diagnosisPatient) throws InterruptedException {
-        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         HttpEntity<byte[]> request = new HttpEntity<>(headers);
 
