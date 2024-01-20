@@ -43,10 +43,6 @@ public class Patient extends Thread {
         semaphore.release();
     }
 
-    public void diagnosisFinished() {
-        this.canGetResult = true;
-    }
-
     @Override
     @SuppressWarnings("java:S106")
     public void run() {
