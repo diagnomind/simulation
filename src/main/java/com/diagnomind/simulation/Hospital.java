@@ -12,29 +12,45 @@ import org.springframework.web.client.RestTemplate;
 
 public class Hospital {
 
+    /** Flag indicating whether the hospital uses a diagnostic model. */
     private Boolean useModel;
+
+    /** RestTemplate for making HTTP requests to external services. */
     private RestTemplate restTemplate;
+
+    /** The base URL for the external simulation service. */
     private static final String URL = "http://127.0.0.1:8080//simulation";
 
+    /** Constants defining the capacity and number of staff in the hospital. */
     private static final int CAPACITY = 4;
     private static final int NUM_DOCTORS = 3;
     private static final int NUM_PATIENTS = 10;
     private static final int NUM_RADIOGRAPHERS = 2;
     private static final int NUM_SPECIALISTS = 2;
 
+    /** Strings representing different levels of indentation for formatting. */
     private static final String SPACE_1 = "\t";
     private static final String SPACE_2 = "\t\t";
     private static final String SPACE_3 = "\t\t\t";
     private static final String SPACE_4 = "\t\t\t\t";
     private static final String SPACE_5 = "\t\t\t\t\t";
 
+    /**
+     * Arrays to store instances of patients, doctors, specialists, and
+     * radiographers.
+     */
     private Patient[] patients;
     private Sanitary[] doctors;
     private Specialist[] specialists;
     private Radiographer[] radiographers;
 
+    /** Total time elapsed during the hospital simulation. */
     private long totalTime;
 
+    /**
+     * Blocking queues for managing patients, doctors, radiographers, and diagnosis
+     * workflow.
+     */
     private BlockingQueue<Patient> firstWaitingRoom;
     private BlockingQueue<Patient> secondWaitingRoom;
     private BlockingQueue<Diagnosis> diagnosisToAprove;
@@ -42,6 +58,13 @@ public class Hospital {
     private BlockingQueue<Radiography> radiographysToEvaluate;
     private BlockingQueue<Diagnosis> finishedDiagnosis;
 
+    /**
+     * Constructs a Hospital object with the specified configuration.
+     *
+     * @param model        Indicates whether the hospital uses a diagnostic model.
+     * @param restTemplate The RestTemplate for making HTTP requests to external
+     *                     services.
+     */
     public Hospital(boolean model, RestTemplate restTemplate) {
         this.useModel = model;
         this.restTemplate = restTemplate;
@@ -60,7 +83,15 @@ public class Hospital {
         this.finishedDiagnosis = new LinkedBlockingQueue<>();
     }
 
-    /* Patient */
+    /**
+     * Adds a patient to the first waiting room.
+     * This method prints a message indicating the patient's entry into the hospital
+     * and the waiting room.
+     *
+     * @param patient The patient to be added to the first waiting room.
+     * @throws InterruptedException If the thread is interrupted while waiting to
+     *                              add the patient to the queue.
+     */
     @SuppressWarnings("java:S106")
     public void firstWaitingRoom(Patient patient) throws InterruptedException {
         System.out.println("[" + patient.getName() + "] enters the hospital");
@@ -69,7 +100,19 @@ public class Hospital {
         System.out.println("[Waitingroom 1]: " + patient.getName() + " enters");
     }
 
-    /* Doc */
+    /**
+     * Attends to a patient by assigning a doctor for evaluation.
+     * This method dequeues a patient from the first waiting room, a doctor from the
+     * available doctors queue,
+     * performs the evaluation, and then enqueues the doctor back to the available
+     * doctors queue.
+     * It prints messages indicating the patient's exit from the waiting room, the
+     * doctor's evaluation process,
+     * and the completion of the evaluation.
+     *
+     * @throws InterruptedException If the thread is interrupted while waiting to
+     *                              dequeue or enqueue patients or doctors.
+     */
     @SuppressWarnings("java:S106")
     public void attendPacient() throws InterruptedException {
         Patient toEvaluate = firstWaitingRoom.take();
@@ -82,7 +125,16 @@ public class Hospital {
         toEvaluate.patientKeepRunning();
     }
 
-    /* Patient */
+    /**
+     * Moves a patient to the second waiting room, indicating that the patient is
+     * waiting for further examination or treatment.
+     * This method puts the patient into the second waiting room queue and prints a
+     * message indicating the patient's entry.
+     *
+     * @param patient The patient to be moved to the second waiting room.
+     * @throws InterruptedException If the thread is interrupted while waiting to
+     *                              put the patient into the queue.
+     */
     @SuppressWarnings("java:S106")
     public void secondWaitingRoom(Patient patient) throws InterruptedException {
         patient.patientWait();
@@ -90,7 +142,18 @@ public class Hospital {
         System.out.println(SPACE_1 + "[Waitingroom 2]: " + patient.getName() + " enters");
     }
 
-    /* Radiographer */
+    /**
+     * Performs a radiography for a patient from the second waiting room.
+     * This method dequeues a patient from the second waiting room, simulates the
+     * radiography process,
+     * and sends the radiography image either to a diagnostic model or a specialist
+     * based on the hospital configuration.
+     * It prints messages indicating the patient's exit from the waiting room, the
+     * radiography process, and the completion.
+     *
+     * @throws InterruptedException If the thread is interrupted while waiting to
+     *                              dequeue patients or perform radiography.
+     */
     @SuppressWarnings("java:S106")
     public void doRadiographyToPacient() throws InterruptedException {
         Patient toEvaluate = secondWaitingRoom.take();
@@ -105,7 +168,19 @@ public class Hospital {
         }
     }
 
-    /* Radiographer */
+    /**
+     * Sends the radiography image of a patient to a diagnostic model via an
+     * external service.
+     * This method performs an HTTP GET request to a predefined URL, retrieves the
+     * radiography image,
+     * and puts the radiography into the queue for evaluation.
+     * It prints messages indicating the process of sending the image to the model.
+     *
+     * @param diagnosisPatient The patient for whom the radiography image is sent to
+     *                         the model.
+     * @throws InterruptedException If the thread is interrupted while waiting to
+     *                              put the radiography into the queue.
+     */
     @SuppressWarnings("java:S106")
     public void sendImageToModel(Patient diagnosisPatient) throws InterruptedException {
         HttpHeaders headers = new HttpHeaders();
@@ -126,7 +201,19 @@ public class Hospital {
         }
     }
 
-    /* Radiographer */
+    /**
+     * Sends the radiography image of a patient to a specialist for evaluation.
+     * This method creates a new Radiography object, indicating that it is not
+     * processed by a diagnostic model,
+     * and puts the radiography into the queue for specialist evaluation.
+     * It prints messages indicating the process of sending the image to the
+     * specialist.
+     *
+     * @param diagnosisPatient The patient for whom the radiography image is sent to
+     *                         the specialist.
+     * @throws InterruptedException If the thread is interrupted while waiting to
+     *                              put the radiography into the queue.
+     */
     @SuppressWarnings("java:S106")
     public void sendImageToSpecialist(Patient diagnosisPatient) throws InterruptedException {
         Radiography newRadiography = new Radiography(diagnosisPatient, false);
@@ -136,7 +223,18 @@ public class Hospital {
                         + "'s image sent");
     }
 
-    /* Specialist */
+    /**
+     * Performs the diagnosis for a patient based on the evaluated radiography.
+     * This method dequeues a radiography from the queue, simulates the diagnosis
+     * process,
+     * and creates a new Diagnosis object with the diagnosis message.
+     * It prints messages indicating the diagnosis process and completes the
+     * diagnosis.
+     *
+     * @throws InterruptedException If the thread is interrupted while waiting to
+     *                              dequeue a radiography or during the diagnosis
+     *                              simulation.
+     */
     @SuppressWarnings({ "java:S106", "java:S5411" })
     public void doDiagnosis() throws InterruptedException {
         Radiography radiographyToEvaluate = radiographysToEvaluate.take();
@@ -150,7 +248,18 @@ public class Hospital {
         diagnosedPatient.patientKeepRunning();
     }
 
-    /* Patient */
+    /**
+     * Retrieves the final diagnosis result for a patient from the finished
+     * diagnosis queue.
+     * This method dequeues a doctor from the available doctors queue, a diagnosis
+     * from the finished diagnosis queue,
+     * and prints messages indicating the final result for the patient.
+     *
+     * @param patient The patient for whom the final diagnosis result is retrieved.
+     * @throws InterruptedException If the thread is interrupted while waiting to
+     *                              dequeue doctors, diagnoses, or during the result
+     *                              presentation.
+     */
     @SuppressWarnings("java:S106")
     public void getFinalResult(Patient patient) throws InterruptedException {
         patient.patientWait();
@@ -166,6 +275,16 @@ public class Hospital {
         availableDocs.put(doc);
     }
 
+    /**
+     * Creates and initializes the threads for @param patients @param
+     * specialists @param radiographers and @param doctors
+     * This method initializes arrays of {@link Patient}, {@link Specialist},
+     * {@link Radiographer}, and {@link Sanitary} objects, associating them with the
+     * hospital.
+     * It also adds doctors to the available doctors queue.
+     *
+     * @return The initialized Hospital object with created threads.
+     */
     @SuppressWarnings("java:S2142")
     public Hospital createThreads() {
         for (int i = 0; i < NUM_PATIENTS; i++) {
@@ -188,6 +307,14 @@ public class Hospital {
         return this;
     }
 
+    /**
+     * Starts the threads for patients, specialists, radiographers, and doctors.
+     * This method iterates through the arrays of Patient, Sanitary (doctors),
+     * Specialist, and Radiographer objects,
+     * and starts each thread.
+     *
+     * @return The Hospital object with started threads.
+     */
     public Hospital startThreads() {
         for (Patient thread : patients) {
             thread.start();
@@ -204,6 +331,19 @@ public class Hospital {
         return this;
     }
 
+    /**
+     * Waits for the completion of all threads for patients, specialists,
+     * radiographers, and doctors.
+     * This method iterates through the arrays of Patient, Sanitary (doctors),
+     * Specialist, and Radiographer objects,
+     * and waits for each thread to complete using the join() method.
+     * It also interrupts the threads for doctors, specialists, and radiographers
+     * before waiting for their completion.
+     *
+     * @return The Hospital object after all threads have completed.
+     * @throws InterruptedException If the thread is interrupted while waiting for
+     *                              the completion of the threads.
+     */
     public Hospital waitEndOfThreads() throws InterruptedException {
         for (Patient thread : patients) {
             thread.join();
@@ -223,30 +363,66 @@ public class Hospital {
         return this;
     }
 
+    /**
+     * Gets the total time elapsed during the hospital simulation.
+     *
+     * @return The total time elapsed in milliseconds.
+     */
     public long getTotalTime() {
         return this.totalTime;
     }
 
+    /**
+     * Gets the blocking queue for the first waiting room.
+     *
+     * @return The {@link BlockingQueue} representing the first waiting room.
+     */
     public BlockingQueue<Patient> getFirstWaitingRoom() {
         return this.firstWaitingRoom;
     }
 
+    /**
+     * Gets the blocking queue for the second waiting room.
+     *
+     * @return The {@link BlockingQueue} representing the second waiting room.
+     */
     public BlockingQueue<Patient> getSecondWaitingRoom() {
         return this.secondWaitingRoom;
     }
 
+    /**
+     * Gets the blocking queue for diagnoses awaiting approval.
+     *
+     * @return The {@link BlockingQueue} representing diagnoses awaiting approval.
+     */
     public BlockingQueue<Diagnosis> getDiagnosisToAprove() {
         return this.diagnosisToAprove;
     }
 
+    /**
+     * Gets the blocking queue for available doctors.
+     *
+     * @return The {@link BlockingQueue} representing available doctors.
+     */
     public BlockingQueue<Sanitary> getAvailableDocs() {
         return this.availableDocs;
     }
 
+    /**
+     * Gets the blocking queue for radiographies awaiting evaluation.
+     *
+     * @return The {@link BlockingQueue} representing radiographies awaiting
+     *         evaluation.
+     */
     public BlockingQueue<Radiography> getRadiographysToEvaluate() {
         return this.radiographysToEvaluate;
     }
 
+    /**
+     * Gets the blocking queue for finished diagnoses.
+     *
+     * @return The {@link BlockingQueue} representing finished diagnoses.
+     */
     public BlockingQueue<Diagnosis> getFinishedDiagnosis() {
         return this.finishedDiagnosis;
     }
