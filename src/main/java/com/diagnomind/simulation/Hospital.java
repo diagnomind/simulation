@@ -63,7 +63,7 @@ public class Hospital {
     /* Patient */
     @SuppressWarnings("java:S106")
     public void firstWaitingRoom(Patient patient) throws InterruptedException {
-        System.out.println("[" + patient + "] enters the hospital");
+        System.out.println("[" + patient.getName() + "] enters the hospital");
         firstWaitingRoom.put(patient);
         patient.setTiempoInit(System.currentTimeMillis());
         System.out.println("[Waitingroom 1]: " + patient.getName() + " enters");
@@ -74,10 +74,10 @@ public class Hospital {
     public void attendPacient() throws InterruptedException {
         Patient toEvaluate = firstWaitingRoom.take();
         Sanitary doc = availableDocs.take();
-        System.out.println("[Waitingroom 1]: " + toEvaluate.getName() + " gets out");
+        System.out.println(SPACE_1 + "[Waitingroom 1]: " + toEvaluate.getName() + " gets out");
         System.out.println(
-                SPACE_1 + "[" + doc.getName() + "]: Evaluating " + toEvaluate.getName());
-        System.out.println(SPACE_1 + "[" + doc.getName() + "]: Evaluation done");
+                SPACE_2 + "[" + doc.getName() + "]: Evaluating " + toEvaluate.getName());
+        System.out.println(SPACE_2 + "[" + doc.getName() + "]: Evaluation done");
         availableDocs.put(doc);
         toEvaluate.patientKeepRunning();
     }
@@ -87,17 +87,17 @@ public class Hospital {
     public void secondWaitingRoom(Patient patient) throws InterruptedException {
         patient.patientWait();
         secondWaitingRoom.put(patient);
-        System.out.println("[Waitingroom 2]: " + patient.getName() + " enters");
+        System.out.println(SPACE_1 + "[Waitingroom 2]: " + patient.getName() + " enters");
     }
 
     /* Radiographer */
     @SuppressWarnings("java:S106")
     public void doRadiographyToPacient() throws InterruptedException {
         Patient toEvaluate = secondWaitingRoom.take();
-        System.out.println("[Waitingroom 2]: " + toEvaluate.getName() + " gets out");
+        System.out.println(SPACE_1 + "[Waitingroom 2]: " + toEvaluate.getName() + " gets out");
         System.out
-                .println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
-        System.out.println(SPACE_2 + "[" + Thread.currentThread().getName() + "]: Radiography done");
+                .println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: Scanning " + toEvaluate.getName());
+        System.out.println(SPACE_3 + "[" + Thread.currentThread().getName() + "]: Radiography done");
         if (Boolean.TRUE.equals(useModel)) {
             this.sendImageToModel(toEvaluate);
         } else {
@@ -121,6 +121,8 @@ public class Hospital {
             System.out.println(
                     SPACE_3 + "[" + Thread.currentThread().getName() + "]: " + newRadiography.getPatient().getName()
                             + "'s image sent to model");
+        } else {
+            System.out.println("[[[[[[[[[[[[[[  CONNECTION ERROR  ]]]]]]]]]]]]]]");
         }
     }
 
@@ -140,8 +142,7 @@ public class Hospital {
         Radiography radiographyToEvaluate = radiographysToEvaluate.take();
         Patient diagnosedPatient = radiographyToEvaluate.getPatient();
         Diagnosis newDiagnosis = new Diagnosis(radiographyToEvaluate, diagnosedPatient.getName() + " has cancer");
-        int millis = 0;
-        millis = (radiographyToEvaluate.getUsesModel()) ? 1000 : 3000;
+        int millis = (radiographyToEvaluate.getUsesModel()) ? 1000 : 3000;
         Thread.sleep(millis);
         System.out.println(SPACE_4 + "[" + Thread.currentThread().getName() + "]: Diagnosis complete for "
                 + diagnosedPatient.getName());
@@ -156,7 +157,7 @@ public class Hospital {
         Sanitary doc = availableDocs.take();
         Diagnosis diagnosis = finishedDiagnosis.take();
         Thread.sleep(1000);
-        System.out.println(SPACE_1 + "[" + doc.getName() + "]: " + patient.getName()
+        System.out.println(SPACE_2 + "[" + doc.getName() + "]: " + patient.getName()
                 + "'s result -> " + "\"" + diagnosis.getMsg() + "\"");
         patient.setTiempoFin(System.currentTimeMillis());
         totalTime += patient.calcularTiempoEjecucion();
