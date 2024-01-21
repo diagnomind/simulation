@@ -10,6 +10,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * The Hospital class represents the central entity in the simulation, managing patients, doctors,
+ * specialists, radiographers, and various queues for patient flow and diagnosis processes.
+ */
 public class Hospital {
 
     /** Flag indicating whether the hospital uses a diagnostic model. */

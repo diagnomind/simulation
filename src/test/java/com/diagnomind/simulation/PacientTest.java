@@ -51,6 +51,10 @@ public class PacientTest {
         assertEquals(5, patientTest.calcularTiempoEjecucion());
     }
 
+    
+    /** 
+     * @throws InterruptedException
+     */
     @Test 
     public void interruotSemaphore() throws InterruptedException {
         doThrow(new InterruptedException()).when(semaphoreMock).acquire();

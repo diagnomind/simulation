@@ -2,6 +2,10 @@ package com.diagnomind.simulation;
 
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * The Main class represents the entry point for the hospital simulation.
+ * It creates and simulates a hospital scenario both with and without a diagnostic model.
+ */
 public class Main {
     static Hospital hospital;
 

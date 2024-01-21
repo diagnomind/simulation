@@ -15,7 +15,7 @@ public class Radiography {
      * Constructs a new Radiography with the given patient and evaluation flag.
      *
      * @param patient          The patient associated with the radiography.
-     * @param evaluatedByModel A flag indicating whether the radiography is
+     * @param bool             A flag indicating whether the radiography is
      *                         evaluated by a diagnostic model.
      */
     public Radiography(Patient patient, boolean bool) {

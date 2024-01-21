@@ -30,6 +30,10 @@ public class RadiographerTest {
         assertEquals(hospitalMock, radioTest.getHospital());
     }
 
+    
+    /** 
+     * @throws InterruptedException
+     */
     @Test
     public void interrupt() throws InterruptedException {
         doThrow(new InterruptedException()).when(hospitalMock).doRadiographyToPacient();
