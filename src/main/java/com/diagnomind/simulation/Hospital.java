@@ -2,6 +2,7 @@ package com.diagnomind.simulation;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -167,7 +168,7 @@ public class Hospital {
     @SuppressWarnings("java:S2142")
     public Hospital createThreads() {
         for (int i = 0; i < NUM_PATIENTS; i++) {
-            patients[i] = new Patient(i + 1, this);
+            patients[i] = new Patient(i + 1, this, new Semaphore(0));
         }
         for (int i = 0; i < NUM_SPECIALISTS; i++) {
             specialists[i] = new Specialist(this, i + 1);

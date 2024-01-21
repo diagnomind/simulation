@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.Semaphore;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,7 +37,7 @@ public class HospitalTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setup() {
-        patient = new Patient(1, hospital);
+        patient = new Patient(1, hospital, new Semaphore(0));
         radiographyWithModel = new Radiography(patient, true);
         radiographyWithoutModel = new Radiography(patient, false);
         diagnosis = new Diagnosis(radiographyWithModel, "Has cancer");
@@ -87,15 +88,14 @@ public class HospitalTest {
     }
 
     @Test
-    public void doRadiographyToPacientTest() throws NoSuchFieldException, SecurityException, InterruptedException,
-            IllegalArgumentException, IllegalAccessException {
+    public void doRadiographyToPacientTest() throws InterruptedException {
         hospital.getSecondWaitingRoom().put(patient);
         hospital.doRadiographyToPacient();
         assertTrue(hospital.getSecondWaitingRoom().isEmpty());
-        Field model = Hospital.class.getDeclaredField("useModel");
-        model.setAccessible(true);
-        model.set(hospital, true);
-        assertTrue(hospital.getSecondWaitingRoom().isEmpty());
+        Hospital newHospital = new Hospital(true, restTemplateMock);
+        newHospital.getSecondWaitingRoom().put(patient);
+        newHospital.doRadiographyToPacient();
+        assertTrue(newHospital.getSecondWaitingRoom().isEmpty());
     }
 
     @Test
@@ -105,8 +105,7 @@ public class HospitalTest {
     }
 
     @Test
-    public void sendImageToSpecialistTest() throws NoSuchFieldException, SecurityException, IllegalArgumentException,
-            IllegalAccessException, InterruptedException {
+    public void sendImageToSpecialistTest() throws InterruptedException {
         hospital.sendImageToSpecialist(patient);
         assertFalse(hospital.getRadiographysToEvaluate().isEmpty());
     }

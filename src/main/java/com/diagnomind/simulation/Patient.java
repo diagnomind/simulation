@@ -6,29 +6,29 @@ public class Patient extends Thread {
     
     Semaphore semaphore;
     Hospital hospital;
-    long tiempoInit;
-    long tiempoFin;
+    long timeInit;
+    long timeEnd;
 
-    public Patient(int id, Hospital hospital) {
+    public Patient(int id, Hospital hospital, Semaphore semaphore) {
         super("Patient " + id);
         this.hospital = hospital;
-        this.semaphore = new Semaphore(0);
+        this.semaphore = semaphore;
     }
 
     public long getTiempoInit() {
-        return tiempoInit;
+        return timeInit;
     }
 
     public void setTiempoInit(long tiempoInit) {
-        this.tiempoInit = tiempoInit;
+        this.timeInit = tiempoInit;
     }
 
     public void setTiempoFin(long tiempoFin) {
-        this.tiempoFin = tiempoFin;
+        this.timeEnd = tiempoFin;
     }
 
     public long calcularTiempoEjecucion(){
-        return (this.tiempoFin-this.tiempoInit);
+        return (this.timeEnd-this.timeInit);
     }
 
     public void patientWait() {
