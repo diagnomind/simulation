@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
@@ -36,7 +37,7 @@ public class HospitalTest {
 
     @Before
     @SuppressWarnings("unchecked")
-    public void setup() {
+    public void setup() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         patient = new Patient(1, hospital, new Semaphore(0));
         radiographyWithModel = new Radiography(patient, true);
         radiographyWithoutModel = new Radiography(patient, false);
@@ -47,7 +48,7 @@ public class HospitalTest {
         ResponseEntity<byte[]> mockResponseEntity = ResponseEntity.ok(new byte[]{});
         when(restTemplateMock.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class),
                 any(ParameterizedTypeReference.class))).thenReturn(mockResponseEntity);
-        
+
         hospital = new Hospital(false, restTemplateMock);
         hospital.createThreads();
     }
@@ -58,6 +59,7 @@ public class HospitalTest {
         hospital = null;
         diagnosis = null;
         patient = null;
+        restTemplateMock = null;
     }
 
     @Test
@@ -102,6 +104,21 @@ public class HospitalTest {
     public void sendImageToModelTest() throws InterruptedException {
         hospital.sendImageToModel(patient);
         assertFalse(hospital.getRadiographysToEvaluate().isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void sendImageToModelBadRequestTest() throws InterruptedException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        ResponseEntity<byte[]> mockResponseEntity = ResponseEntity.ok(new byte[]{});
+        Field status = ResponseEntity.class.getDeclaredField("status");
+        status.setAccessible(true);
+        status.set(mockResponseEntity, HttpStatusCode.valueOf(400));
+        when(restTemplateMock.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class),
+                any(ParameterizedTypeReference.class))).thenReturn(mockResponseEntity);
+        
+        Hospital newHospital = new Hospital(true, restTemplateMock);
+        newHospital.sendImageToModel(patient);
+        assertTrue(newHospital.getRadiographysToEvaluate().isEmpty());
     }
 
     @Test
