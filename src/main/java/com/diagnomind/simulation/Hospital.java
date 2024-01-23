@@ -21,7 +21,7 @@ public class Hospital {
 
     /** RestTemplate for making HTTP requests to external services. */
     private RestTemplate restTemplate;
-    private static final String URL = "https://simulation.diagnomind.duckdns.org";
+    private static final String URL = "https://simulation.diagnomind.duckdns.org/simulation";
 
     /** Constants defining the capacity and number of staff in the hospital. */
     private static final int CAPACITY = 4;
@@ -199,7 +199,7 @@ public class Hospital {
                     SPACE_3 + "[" + Thread.currentThread().getName() + "]: " + newRadiography.getPatient().getName()
                             + "'s image sent to model");
         } else {
-            System.out.println("[[[[[[[[[[[[[[  CONNECTION ERROR  ]]]]]]]]]]]]]]");
+            System.out.println("[[[[[[[[[[[[[[  CONNECTION STATUS ERROR " + status + " ]]]]]]]]]]]]]]");
         }
     }
 
