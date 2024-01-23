@@ -23,6 +23,10 @@ public class SpecialistTest {
         hospitalMock = null;
     }
 
+    
+    /** 
+     * @throws InterruptedException
+     */
     @Test
     public void interrupt() throws InterruptedException {
         doThrow(new InterruptedException()).when(hospitalMock).doDiagnosis();

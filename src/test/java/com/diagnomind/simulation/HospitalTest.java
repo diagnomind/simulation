@@ -35,6 +35,13 @@ public class HospitalTest {
     Radiography radiographyWithoutModel;
     Patient patientMock;
 
+    
+    /** 
+     * @throws NoSuchFieldException
+     * @throws SecurityException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
     @Before
     @SuppressWarnings("unchecked")
     public void setup() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
