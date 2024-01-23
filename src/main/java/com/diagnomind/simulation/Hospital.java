@@ -14,7 +14,7 @@ public class Hospital {
 
     private Boolean useModel;
     private RestTemplate restTemplate;
-    private static final String URL = "http://127.0.0.1:8080//simulation";
+    private static final String URL = "https://simulation.diagnomind.duckdns.org";
 
     private static final int CAPACITY = 4;
     private static final int NUM_DOCTORS = 3;
