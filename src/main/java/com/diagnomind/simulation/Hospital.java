@@ -55,7 +55,6 @@ public class Hospital {
      */
     private BlockingQueue<Patient> firstWaitingRoom;
     private BlockingQueue<Patient> secondWaitingRoom;
-    private BlockingQueue<Diagnosis> diagnosisToAprove;
     private BlockingQueue<Sanitary> availableDocs;
     private BlockingQueue<Radiography> radiographysToEvaluate;
     private BlockingQueue<Diagnosis> finishedDiagnosis;
@@ -80,7 +79,6 @@ public class Hospital {
         this.firstWaitingRoom = new LinkedBlockingQueue<>(CAPACITY);
         this.secondWaitingRoom = new LinkedBlockingQueue<>(CAPACITY);
         this.availableDocs = new LinkedBlockingQueue<>(NUM_DOCTORS);
-        this.diagnosisToAprove = new LinkedBlockingQueue<>();
         this.radiographysToEvaluate = new LinkedBlockingQueue<>();
         this.finishedDiagnosis = new LinkedBlockingQueue<>();
     }
@@ -390,15 +388,6 @@ public class Hospital {
      */
     public BlockingQueue<Patient> getSecondWaitingRoom() {
         return this.secondWaitingRoom;
-    }
-
-    /**
-     * Gets the blocking queue for diagnoses awaiting approval.
-     *
-     * @return The {@link BlockingQueue} representing diagnoses awaiting approval.
-     */
-    public BlockingQueue<Diagnosis> getDiagnosisToAprove() {
-        return this.diagnosisToAprove;
     }
 
     /**

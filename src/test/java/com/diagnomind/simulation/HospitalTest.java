@@ -165,12 +165,6 @@ public class HospitalTest {
     }
 
     @Test
-    public void getDiagnosisToAproveTest() throws InterruptedException {
-        hospital.getDiagnosisToAprove().put(diagnosis);
-        assertEquals(diagnosis, hospital.getDiagnosisToAprove().take());
-    }
-
-    @Test
     public void getAvailableDocsTest() {
         assertNotNull(hospital.getAvailableDocs());
     }
