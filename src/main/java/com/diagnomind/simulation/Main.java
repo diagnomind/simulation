@@ -1,61 +1,26 @@
 package com.diagnomind.simulation;
 
+import org.springframework.web.client.RestTemplate;
+
+/**
+ * The Main class represents the entry point for the hospital simulation.
+ * It creates and simulates a hospital scenario both with and without a diagnostic model.
+ */
 public class Main {
 
-    static final int NUM_PACIENTE = 50;
-    static final int NUM_DOCTOR = 1;
-
-    private Pacient pacients[];
-    private Sanitary doctor[];
-
-    private void waitEndOfThreads() {
-
-        try {
-            for (int i = 0; i < NUM_PACIENTE; i++) {
-                pacients[i].join();
-            }
-            for (int i = 0; i < NUM_DOCTOR; i++) {
-                doctor[i].interrupt();
-            }
-            for (int i = 0; i < NUM_DOCTOR; i++) {
-                doctor[i].join();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void interruptThreads() {
-
-        for (int i = 0; i < NUM_PACIENTE; i++) {
-            pacients[i].interrupt();
-        }
-        for (int i = 0; i < NUM_DOCTOR; i++) {
-            doctor[i].interrupt();
-        }
-    }
-
-    private void startThreads() {
-        for (int i = 0; i < NUM_PACIENTE; i++) {
-            pacients[i].start();
-        }
-        for (int i = 0; i < NUM_DOCTOR; i++) {
-            doctor[i].start();
-        }
-    }
-
-    public static void main(String[] args) {
-        Main main = new Main();
-        main.startThreads();
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
-        }
-
-        main.interruptThreads();
-        main.waitEndOfThreads();
+    /**
+     * The main method that initiates and runs the hospital simulation.
+     *
+     * @param args The command-line arguments (not used in this application).
+     * @throws InterruptedException If the thread is interrupted while waiting for
+     *                              the completion of threads.
+     */
+    @SuppressWarnings("java:S106")
+    public static void main(String[] args) throws InterruptedException {
+        RestTemplate restTemplate = new RestTemplate();
+        long timeWithoutModel = (new Hospital(false, restTemplate)).createThreads().startThreads().waitEndOfThreads().getTotalTime();
+        long timeWithModel = (new Hospital(true, restTemplate)).createThreads().startThreads().waitEndOfThreads().getTotalTime();
+        System.out.println("\nSimulation score without model: " + timeWithoutModel + "\nSimulation score with model: " + timeWithModel + "\n");
     }
 
 }
